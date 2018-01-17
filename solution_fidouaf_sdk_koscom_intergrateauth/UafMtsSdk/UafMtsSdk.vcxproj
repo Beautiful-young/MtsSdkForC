@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,6 +116,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="authreqmsg.cpp" />
+    <ClCompile Include="Base64Decode.cpp" />
+    <ClCompile Include="Base64Encode.cpp" />
+    <ClCompile Include="common.cpp" />
+    <ClCompile Include="httputill.cpp" />
+    <ClCompile Include="InternalJsonMessage.cpp" />
+    <ClCompile Include="logutill.cpp" />
+    <ClCompile Include="UafMtsSdk.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="authreqmsg.h" />
+    <ClInclude Include="Base64Decode.h" />
+    <ClInclude Include="Base64Encode.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="commonDef.h" />
+    <ClInclude Include="httputill.h" />
+    <ClInclude Include="InternalJsonMessage.h" />
+    <ClInclude Include="logutill.h" />
+    <ClInclude Include="UafMessageDefine.h" />
+    <ClInclude Include="UafMtsSdk.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
