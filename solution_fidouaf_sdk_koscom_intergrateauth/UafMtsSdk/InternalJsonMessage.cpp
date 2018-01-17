@@ -1191,3 +1191,9 @@ void internalJsonMessageRelease(InternalJsonMessage* msgstruct) {
 	}
 
 }
+
+
+void msgSturctFree(InternalJsonMessage *msg){
+	if(msg)
+		free(msg);
+}

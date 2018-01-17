@@ -1,4 +1,7 @@
 #pragma once
+
+const char *E_TYPE_SUCCESS_STR = "00000000";
+
 const char *INTERNALVERSION = "1.0";
 
 const size_t DIRECTION_BROWSER = 1;
@@ -22,9 +25,9 @@ const char *OPERATION_U2F_AUTH = "u2f_auth";
 
 const char* CURVER_ASSERTIONSCHEME = "UAFV1TLV";
 
-const char* OPERATION_REG = "Reg";
-const char* OPERATION_AUTH = "Auth";
-const char* OPERATION_DEREG = "Dereg";
+const char* OPERATION_REG = "reg";
+const char* OPERATION_AUTH = "auth";
+const char* OPERATION_DEREG = "dereg";
 
 const char* CONTEXTTYPE_TEXTPLAIN = "text/plain";
 const char* CONTEXTTYPE_IMAGEPNG = "image/png";

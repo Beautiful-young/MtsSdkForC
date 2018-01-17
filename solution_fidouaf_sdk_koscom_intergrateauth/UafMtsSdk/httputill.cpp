@@ -94,6 +94,7 @@ void saimplehttps(char* url, char* data) {
 	else {
 		printf("%lu bytes retrieved\n", (long)chunk.size);
 		printf("%s \n", chunk.memory);
+
 	}
 
 
@@ -105,8 +106,8 @@ void saimplehttps(char* url, char* data) {
 }
 
 
-char* httpsPost(char *pemcert, char* url, char* data) {
-	char *retData = NULL;
+int httpsPost(char *pemcert, char* url, char* data,char** outData, size_t *outDataLen) {
+	int retData = 0;
 	CURL *curl;
 	CURLcode res;
 	struct curl_slist *headers = NULL;
@@ -146,9 +147,14 @@ char* httpsPost(char *pemcert, char* url, char* data) {
 	else {
 		printf("%lu bytes retrieved\n", (long)chunk.size);
 		printf("%s \n", chunk.memory);
+		if (chunk.size > 0) {
+			*outData = (char*)calloc(chunk.size + 1, sizeof(char));
+			*outDataLen = chunk.size;
+			memcpy(*outData, chunk.memory, chunk.size);
+			retData = 1;
+		}
 	}
-
-
+	
 	curl_easy_cleanup(curl);
 
 	free(chunk.memory);
@@ -156,4 +162,9 @@ char* httpsPost(char *pemcert, char* url, char* data) {
 	curl_global_cleanup();
 
 	return retData;
+}
+
+void retHttpDataFree(char *data) {
+	if(data)
+		free(data);
 }

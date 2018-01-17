@@ -9,5 +9,6 @@
 #endif
 
 int Init(const char *path);
-InternalJsonMessage* registrationRequest(char *targetUrl, char *userid, char *appid);
-
+size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);
+void retDataFree(char *msg);
+char* getCommonErrMsg(char* operation);

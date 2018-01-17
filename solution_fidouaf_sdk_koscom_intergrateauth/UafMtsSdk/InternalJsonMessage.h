@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 typedef struct InternalJsonMessage {
 	char* version;			//	string	
 	size_t source = -99;			//	integer	
@@ -73,3 +71,6 @@ typedef struct InternalJsonMessage {
 	char* authtype;
 	char* deregflag;
 }InternalJsonMessage;
+
+InternalJsonMessage* parse(const char *input);
+void msgSturctFree(InternalJsonMessage *msg);

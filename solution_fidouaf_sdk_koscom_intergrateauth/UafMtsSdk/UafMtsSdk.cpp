@@ -8,6 +8,7 @@
 #include "common.h"
 #include "commonDef.h"
 #include "httputill.h"
+#include "InternalJsonMessage.h"
 
 static char SSL_PEMCERT_PATH_UAFSDK[128];
 static char LOG_USAGE_UAFSDK[4];
@@ -73,10 +74,34 @@ int Init(const char *path) {
 }
 
 /*
+0. 공통 오류
+*/
+char* getCommonErrMsg(const char* operation) {
+	char *retMsg = NULL;
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOCLIENT));
+	json_object_set_new(root, "operation", json_string(operation));
+	json_object_set_new(root, "errorcode", json_string("0200F000"));
+	json_object_set_new(root, "errormessage", json_string("0x$Communication to agnet server failed."));
+	jsmsg = json_dumps(root, 0);
+	
+	retMsg = (char*)calloc(strlen(jsmsg), sizeof(char));
+	memcpy(retMsg, jsmsg, strlen(jsmsg));
+
+	json_decref(root);
+
+	return retMsg;
+}
+
+/*
 1. registrationRequest
 */
-InternalJsonMessage* registrationRequest(char *targetUrl, char *userid, char *appid) {
-	InternalJsonMessage* objRet = NULL;
+size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
 	char rpwebsession[38];
 	size_t rc;
 	rc = getSessionID(rpwebsession);
@@ -86,7 +111,7 @@ InternalJsonMessage* registrationRequest(char *targetUrl, char *userid, char *ap
 	json_object_set_new(root, "version", json_string(INTERNALVERSION));
 	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
 	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
-	json_object_set_new(root, "authenticationmode", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "operation", json_string(OPERATION_REG));
 
 	json_object_set_new(root, "userid", json_string(userid));
 	json_object_set_new(root, "appid", json_string(appid));
@@ -95,28 +120,65 @@ InternalJsonMessage* registrationRequest(char *targetUrl, char *userid, char *ap
 	jsmsg = json_dumps(root, 0);
 	fprintf(stdout, "jsmsg : %s\n", jsmsg);
 	
-	char *revData;
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
 
-	revData = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg);
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
 
+	if(revChk && outDataTmp && outDataLenTmp > 0){
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
 
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if(temErrMsg)
+			free(temErrMsg);
+	}
+	
 	json_decref(root);
-
-	return objRet;
+	return retVal;
 }
 
+void retDataFree(char *msg) {
+	if(msg)
+		free(msg);
+}
 
 int main(void) {
 	const char *path = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
 	const char *targetUrl = "https://fido.signkorea.com:9033/registrationrequestfromfc";
 	const char *userid="test01";
-	const char *appid="https://fido.signkorea.com:9024/appid";
+	const char *appid="https://211.236.246.77:9024/appid";
 
 	size_t ret;
 	ret = Init(path);
 
-	InternalJsonMessage *retobj = NULL;
+	boolean revChk = false;
+	char *outData = NULL;
+	size_t outDataLen = 0;
 
-	retobj = registrationRequest((char*)targetUrl, (char*)userid, (char*)appid);
 
+	revChk = registrationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData , &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+	
+	retDataFree(outData);
+
+	system("pause");
 }
