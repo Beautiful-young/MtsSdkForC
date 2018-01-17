@@ -99,6 +99,7 @@ char* getCommonErrMsg(const char* operation) {
 
 /*
 1. registrationRequest
+등록요청
 */
 size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
@@ -147,6 +148,32 @@ size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **ou
 	json_decref(root);
 	return retVal;
 }
+
+/*
+2. registrationResponse
+ 등록 검증
+*/
+size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char *b64regresp, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_REG));
+
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "sessionid", json_string(sessionid));
+	json_object_set_new(root, "regresponsemsg", json_string(b64regresp));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	return retVal;
+}
+
 
 void retDataFree(char *msg) {
 	if(msg)
