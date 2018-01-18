@@ -74,3 +74,6 @@ typedef struct InternalJsonMessage {
 
 InternalJsonMessage* parse(const char *input);
 void msgSturctFree(InternalJsonMessage *msg);
+void internalJsonMessageRelease(InternalJsonMessage* msgstruct);
+void jsonRetFree(void *data);
+char* makeIJMessageToJson(InternalJsonMessage *ijmsg);

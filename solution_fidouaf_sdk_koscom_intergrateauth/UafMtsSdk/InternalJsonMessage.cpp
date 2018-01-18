@@ -1197,3 +1197,8 @@ void msgSturctFree(InternalJsonMessage *msg){
 	if(msg)
 		free(msg);
 }
+
+void jsonRetFree(void *data) {
+	if(data)
+		free(data);
+}

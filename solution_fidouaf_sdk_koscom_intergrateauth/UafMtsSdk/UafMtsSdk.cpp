@@ -9,6 +9,7 @@
 #include "commonDef.h"
 #include "httputill.h"
 #include "InternalJsonMessage.h"
+#include "authreqmsg.h"
 
 static char SSL_PEMCERT_PATH_UAFSDK[128];
 static char LOG_USAGE_UAFSDK[4];
@@ -19,7 +20,7 @@ int Init(const char *path) {
 	if (once) return 1;
 
 	config_t cfg;
-	config_setting_t *setting;
+	//config_setting_t *setting;
 	const char *str_ssl_pemcert_path_uafsdk;
 	const char *str_log_usage_uafsdk;
 	const char *str_log_path_uafsdk;
@@ -150,6 +151,42 @@ size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **ou
 }
 
 /*
+1-1. registrationRequestWithJson
+등록요청 입력 파라미터 json String 
+*/
+size_t registrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *userid = itjsmsg->userid;
+		char *appid = itjsmsg->appid;
+		retVal = registrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+
+/*
 2. registrationResponse
  등록 검증
 */
@@ -171,8 +208,719 @@ size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char 
 	jsmsg = json_dumps(root, 0);
 	fprintf(stdout, "jsmsg : %s\n", jsmsg);
 
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+
 	return retVal;
 }
+
+/*
+2-1. registrationResponseWithJson
+등록 검증 입력 파라미터 json String 
+*/
+size_t registrationResponseWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *appid = itjsmsg->appid;
+		char *sessionid = itjsmsg->sessionid;
+		char *regresponsemsg = itjsmsg->regrequestmsg;
+
+
+		retVal = registrationResponse(targetUrl, appid, sessionid, regresponsemsg, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+/*
+3. authenticationRequest
+인증요청
+*/
+size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_AUTH));
+
+	json_object_set_new(root, "userid", json_string(userid));
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+	return retVal;
+}
+
+
+/*
+3-1. authenticationRequestWithJson
+인증요청 입력 파라미터 json String
+*/
+size_t authenticationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *userid = itjsmsg->userid;
+		char *appid = itjsmsg->appid;
+		retVal = authenticationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+/*
+4. authenticationResponse
+인증검증
+*/
+size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_AUTH));
+
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "sessionid", json_string(sessionid));
+	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+
+	return retVal;
+}
+
+/*
+4-1. authenticationResponsWithJson
+인증검증 (입력 파라미터 json String)
+*/
+size_t authenticationResponseWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *appid = itjsmsg->appid;
+		char *sessionid = itjsmsg->sessionid;
+		char *authresponsemsg = itjsmsg->authresponsemsg;
+
+
+		retVal = authenticationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+/*
+5. transactionConfirmationRequest
+transaction confirmation 요청
+*/
+size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
+	, char *contentType, char *contentEncodingType, char *content, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_TC));
+
+	json_object_set_new(root, "userid", json_string(userid));
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "contentType", json_string(contentType));
+	json_object_set_new(root, "contentEncodingType", json_string(contentEncodingType));
+	json_object_set_new(root, "content", json_string(content));
+
+	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+	return retVal;
+
+}
+
+/*
+5-1. transactionConfirmationRequestWithJson
+transaction confirmation 요청 (입력 파라미터 json string)
+*/
+size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *userid = itjsmsg->userid;
+		char *appid = itjsmsg->appid;
+		char *contentType = itjsmsg->contentType;
+		char *contentEncodingType = itjsmsg->contentEncodingType;
+		char *content = itjsmsg->content;
+
+		retVal = transactionConfirmationRequest(targetUrl, userid, appid, contentType, contentEncodingType, content, &outDataTmp, &outDataLenTmp);
+
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+	return retVal;
+}
+
+
+/*
+6. transactionConfirmationResponse
+transaction confirmation 요청
+*/
+size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_TC));
+
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "sessionid", json_string(sessionid));
+	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+
+	return retVal;
+}
+
+
+/*
+6-1. transactionConfirmationResponseWithJson
+transaction confirmation 요청 (입력 파라미터 json string)
+*/
+size_t transactionConfirmationResponse(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *appid = itjsmsg->appid;
+		char *sessionid = itjsmsg->sessionid;
+		char *authresponsemsg = itjsmsg->authresponsemsg;
+
+		retVal = transactionConfirmationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+/*
+7. simpleAuthRequest
+단축서명요청
+*/
+size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pubkey, char *b64nonid, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_SS));
+
+	json_object_set_new(root, "userid", json_string(userid));
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+	json_object_set_new(root, "b64pk", json_string(b64pubkey));
+	
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		
+		InternalJsonMessage *itjsmsg = parse(outDataTmp);
+		char *authreqmsg = itjsmsg->authrequestmsg;
+		char *convertAuthreqmsg = setExtensionAuthReqB64Url(authreqmsg, NULL, NULL, b64nonid);
+		itjsmsg->authrequestmsg = convertAuthreqmsg;
+		char *converitjsmsg = makeIJMessageToJson(itjsmsg);
+		
+		internalJsonMessageRelease(itjsmsg);
+		extensionAuthReqB64Url_free(convertAuthreqmsg);
+		retHttpDataFree(outDataTmp);
+
+		*outData = (char*)calloc(strlen(converitjsmsg)+1, sizeof(char));
+		*outDataLen = strlen(converitjsmsg);
+		memcpy(*outData, converitjsmsg, strlen(converitjsmsg));
+		
+		jsonRetFree(converitjsmsg);
+
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+	return retVal;
+}
+
+/*
+7-1. simpleAuthRequestWithJson
+단축서명요청 (입력 파라미터 json String)
+*/
+size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *userid = itjsmsg->userid;
+		char *appid = itjsmsg->appid;
+		char *b64pubkey = itjsmsg->b64pk;
+
+		retVal = simpleAuthRequest(targetUrl, userid, appid, b64pubkey, b64nonid,  &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+/*
+8. simpleAuthResponse
+단축서명 검증요청
+*/
+size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
+	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_SS));
+
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "sessionid", json_string(sessionid));
+	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+
+	return retVal;
+}
+
+
+/*
+8-1. simpleAuthResponseWithJson
+단축서명 검증요청 (입력 파라미터 json String)
+*/
+size_t simpleAuthResponseWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *appid = itjsmsg->appid;
+		char *sessionid = itjsmsg->sessionid;
+		char *authresponsemsg = itjsmsg->authresponsemsg;
+
+
+		retVal = simpleAuthResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+/*
+9. deregistrationRequest
+탈퇴요청
+*/
+size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+
+	size_t retVal = 0;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	char *jsmsg = NULL;
+	json_t *root = json_object();
+
+	json_object_set_new(root, "version", json_string(INTERNALVERSION));
+	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
+	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
+	json_object_set_new(root, "operation", json_string(OPERATION_DEREG));
+
+	json_object_set_new(root, "userid", json_string(userid));
+	json_object_set_new(root, "appid", json_string(appid));
+	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+
+	jsmsg = json_dumps(root, 0);
+	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+
+	boolean revChk;
+	char *outDataTmp = NULL;
+	size_t outDataLenTmp = 0;
+
+	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
+	retVal = revChk;
+
+	if (revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+
+		retHttpDataFree(outDataTmp);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_DEREG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	json_decref(root);
+	return retVal;
+
+}
+
+
+/*
+9-1. deregistrationRequestWithJson
+탈퇴요청 (입력 파라미터 json String)
+*/
+size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+	size_t retVal = 0;
+
+	InternalJsonMessage *itjsmsg = parse(jsmsg);
+
+	if (itjsmsg) {
+		char *outDataTmp = NULL;
+		size_t outDataLenTmp = 0;
+		char *userid = itjsmsg->userid;
+		char *appid = itjsmsg->appid;
+		retVal = deregistrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outDataLen = outDataLenTmp;
+		memcpy(*outData, outDataTmp, outDataLenTmp);
+		retDataFree(outDataTmp);
+		internalJsonMessageRelease(itjsmsg);
+	}
+	else {
+		char* temErrMsg = getCommonErrMsg(OPERATION_DEREG);
+		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outDataLen = strlen(temErrMsg);
+		memcpy(*outData, temErrMsg, strlen(temErrMsg));
+
+		if (temErrMsg)
+			free(temErrMsg);
+	}
+
+	return retVal;
+}
+
+
+
 
 
 void retDataFree(char *msg) {
@@ -194,6 +942,7 @@ int main(void) {
 	size_t outDataLen = 0;
 
 
+	/*
 	revChk = registrationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData , &outDataLen);
 
 	if (revChk) {
@@ -205,6 +954,190 @@ int main(void) {
 	fprintf(stdout, "outData : %d\n", outDataLen);
 	fprintf(stdout, "outData : %s\n", outData);
 	
+	retDataFree(outData);
+	*/
+
+	/*
+	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
+
+	revChk = registrationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+
+
+	//registrationResponse 테스트
+	/*
+	char *sessionid = NULL;
+	char *b64regresp = NULL;
+	targetUrl = "https://fido.signkorea.com:9033/registrationresponsefromfc";
+	
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	sessionid = rpwebsession;
+	revChk = registrationResponse((char*)targetUrl, (char*)appid, (char*)rpwebsession, (char*)b64regresp, &outData, &outDataLen);
+	
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+	retDataFree(outData);
+	*/
+
+	//registrationResponseWithJson 테스트
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/registrationresponsefromfc";
+	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"operation\":\"reg\",\"regresponsemsg\":\"\"}";
+
+	revChk = registrationResponseWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+	fprintf(stdout, "success. \n");
+	}
+	else {
+	fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+	/*
+	public static String AUTHENTICATIONREQUESTSUBURL = "/authenticationrequestfromfc";
+	public static String AUTHENTICATIONRESPONSESUBURL = "/authenticationresponsefromfc";
+	public static String DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
+	public static String SIMPLEAUTHREQUESTSUBURL = "/simpleauthenticationrequestfromfc";
+	public static String SIMPLEAUTHRESPONSESUBURL = "/simpleauthenticationresponsefromfc";
+	public static String APPID = "https://211.236.246.77:9024/appid";
+	*/
+	
+	//authenticationRequest
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
+	revChk = authenticationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+
+
+	//authenticationResponseWithJson 
+	/*
+	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\"}";
+	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
+	revChk = authenticationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+	
+	//authenticationResponse
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
+	char *sessionid = NULL;
+	char *b64authresp = NULL;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	sessionid = rpwebsession;
+	revChk = authenticationResponse((char*)targetUrl, (char*)appid, (char*)sessionid, (char*)b64authresp, &outData, &outDataLen);
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+	retDataFree(outData);
+	*/
+
+	//authenticationResponseWithJson
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"1\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"53e80666f19249fea257904a779b47de\"}";
+
+	authenticationResponseWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+	retDataFree(outData);
+	*/
+	
+	//transactionConfirmationRequest
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
+	char *contentType = NULL;
+	char *contentEncodingType = NULL;
+	char *content=NULL;
+
+	revChk = transactionConfirmationRequest((char*)targetUrl, (char*)userid, (char*)appid
+		, contentType, contentEncodingType, content, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+
+	//transactionConfirmationRequestWithJson
+	/*
+	transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
+	*/
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"2\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"185d418312d1416abf3b1fbac717ef99\"}";
+	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
+	revChk = transactionConfirmationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
 	retDataFree(outData);
 
 	system("pause");
