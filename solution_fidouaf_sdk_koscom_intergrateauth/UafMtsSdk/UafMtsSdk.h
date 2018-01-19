@@ -1,5 +1,14 @@
 #pragma once
-#include "InternalJsonMessage.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <libconfig.h>
+#include <jansson.h>
+
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 #ifdef WIN32
 #pragma warning(disable:4996)
 #pragma warning(disable:4267)
@@ -7,6 +16,11 @@
 #pragma warning(disable:4244)
 #pragma warning(disable:4819)
 #endif
+#include "common.h"
+#include "httputill.h"
+#include "InternalJsonMessage.h"
+#include "authreqmsg.h"
+
 
 int Init(const char *path);
 size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);
@@ -33,3 +47,8 @@ size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 
 void retDataFree(char *msg);
 char* getCommonErrMsg(const char* operation);
+
+
+#ifdef __cplusplus
+}
+#endif 

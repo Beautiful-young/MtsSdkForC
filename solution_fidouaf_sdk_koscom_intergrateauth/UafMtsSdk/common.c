@@ -43,7 +43,7 @@ void Base64_write_bits(Base64Context *pbContext, size_t nBits, int nNumBits, uns
 
 	while (pbContext->m_nBitsRemaining > 7)
 	{
-		nScratch = pbContext->m_lBitStorage >> (pbContext->m_nBitsRemaining - 8);
+		nScratch = (unsigned char)(pbContext->m_lBitStorage >> (pbContext->m_nBitsRemaining - 8));
 		szOutput[(*index)++] = (unsigned char)(nScratch & 0xFF);
 		pbContext->m_nBitsRemaining -= 8;
 	}

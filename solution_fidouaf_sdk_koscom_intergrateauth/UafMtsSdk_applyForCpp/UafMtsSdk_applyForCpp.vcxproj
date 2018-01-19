@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{77D82BFB-137A-4283-BB27-A50429CEA616}</ProjectGuid>
-    <RootNamespace>UafMtsSdkapplyForC</RootNamespace>
+    <ProjectGuid>{963F724A-6138-4B71-885D-8C56EE0CC6E7}</ProjectGuid>
+    <RootNamespace>UafMtsSdkapplyForCpp</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -77,6 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\bgmoon\source\repos\MtsSdkForC\solution_fidouaf_sdk_koscom_intergrateauth\UafMtsSdk;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>__cplusplus;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Users\bgmoon\source\repos\MtsSdkForC\solution_fidouaf_sdk_koscom_intergrateauth\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -120,7 +121,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c" />
+    <ClCompile Include="MainClass.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

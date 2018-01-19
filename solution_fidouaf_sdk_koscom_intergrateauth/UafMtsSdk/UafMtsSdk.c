@@ -1,15 +1,6 @@
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <libconfig.h>
-#include <jansson.h>
 #include "UafMtsSdk.h"
-#include "common.h"
 #include "commonDef.h"
-#include "httputill.h"
-#include "InternalJsonMessage.h"
-#include "authreqmsg.h"
 
 static char SSL_PEMCERT_PATH_UAFSDK[128];
 static char LOG_USAGE_UAFSDK[4];
@@ -958,7 +949,7 @@ void retDataFree(char *msg) {
 		free(msg);
 }
 
-int main(void) {
+int main_88(void) {
 	const char *path = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
 	const char *targetUrl = "https://fido.signkorea.com:9033/registrationrequestfromfc";
 	const char *userid="test01";
@@ -1359,4 +1350,5 @@ int main(void) {
 	retDataFree(outData);
 	
 	system("pause");
+	return 0;
 }
