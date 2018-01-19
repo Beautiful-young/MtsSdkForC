@@ -967,7 +967,7 @@ int main(void) {
 	size_t ret;
 	ret = Init(path);
 
-	boolean revChk = false;
+	size_t revChk = FALSE;
 	char *outData = NULL;
 	size_t outDataLen = 0;
 

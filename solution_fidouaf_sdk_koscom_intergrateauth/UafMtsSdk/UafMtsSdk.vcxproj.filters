@@ -15,28 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="authreqmsg.cpp">
+    <ClCompile Include="UafMtsSdk.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Base64Decode.cpp">
+    <ClCompile Include="logutill.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Base64Encode.cpp">
+    <ClCompile Include="InternalJsonMessage.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="common.cpp">
+    <ClCompile Include="httputill.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="httputill.cpp">
+    <ClCompile Include="common.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="InternalJsonMessage.cpp">
+    <ClCompile Include="Base64Encode.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="logutill.cpp">
+    <ClCompile Include="Base64Decode.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="UafMtsSdk.cpp">
+    <ClCompile Include="authreqmsg.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

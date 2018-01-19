@@ -156,7 +156,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 		exts_enc_simplekey = json_object();
 		json_object_set(exts_enc_simplekey, "id", json_string(EXE_SIMPLEPUBKEY));
 		json_object_set(exts_enc_simplekey, "data", json_string((const char*)p_simplekey));
-		json_object_set(exts_enc_simplekey, "fail_if_unknown", json_boolean(false));
+		json_object_set(exts_enc_simplekey, "fail_if_unknown", json_boolean(FALSE));
 
 		exts_list_enc = json_array();
 		json_array_append(exts_list_enc, exts_enc_simplekey);
@@ -166,7 +166,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 		exts_enc_devid = json_object();
 		json_object_set(exts_enc_devid, "id", json_string(EXE_DEVID));
 		json_object_set(exts_enc_devid, "data", json_string((const char*)p_devid));
-		json_object_set(exts_enc_devid, "fail_if_unknown", json_boolean(false));
+		json_object_set(exts_enc_devid, "fail_if_unknown", json_boolean(FALSE));
 
 		if (exts_list_enc == NULL) {
 			exts_list_enc = json_array();
@@ -178,7 +178,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 		exts_enc_nonid = json_object();
 		json_object_set(exts_enc_nonid, "id", json_string(EXE_NONID));
 		json_object_set(exts_enc_nonid, "data", json_string((const char*)p_nonid));
-		json_object_set(exts_enc_nonid, "fail_if_unknown", json_boolean(false));
+		json_object_set(exts_enc_nonid, "fail_if_unknown", json_boolean(FALSE));
 
 		if (exts_list_enc == NULL) {
 			exts_list_enc = json_array();

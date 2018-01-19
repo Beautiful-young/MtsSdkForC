@@ -32,4 +32,4 @@ size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **
 size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
 
 void retDataFree(char *msg);
-char* getCommonErrMsg(char* operation);
+char* getCommonErrMsg(const char* operation);

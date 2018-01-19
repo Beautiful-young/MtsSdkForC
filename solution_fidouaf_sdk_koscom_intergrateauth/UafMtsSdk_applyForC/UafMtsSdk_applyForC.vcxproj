@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{FB0A2843-3A18-40F0-9C3F-C76A736B4781}</ProjectGuid>
-    <RootNamespace>UafMtsSdk</RootNamespace>
+    <ProjectGuid>{77D82BFB-137A-4283-BB27-A50429CEA616}</ProjectGuid>
+    <RootNamespace>UafMtsSdkapplyForC</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -76,7 +76,6 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,26 +115,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="authreqmsg.c" />
-    <ClCompile Include="Base64Decode.c" />
-    <ClCompile Include="Base64Encode.c" />
-    <ClCompile Include="common.c" />
-    <ClCompile Include="httputill.c" />
-    <ClCompile Include="InternalJsonMessage.c" />
-    <ClCompile Include="logutill.c" />
-    <ClCompile Include="UafMtsSdk.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="authreqmsg.h" />
-    <ClInclude Include="Base64Decode.h" />
-    <ClInclude Include="Base64Encode.h" />
-    <ClInclude Include="common.h" />
-    <ClInclude Include="commonDef.h" />
-    <ClInclude Include="httputill.h" />
-    <ClInclude Include="InternalJsonMessage.h" />
-    <ClInclude Include="logutill.h" />
-    <ClInclude Include="UafMessageDefine.h" />
-    <ClInclude Include="UafMtsSdk.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
