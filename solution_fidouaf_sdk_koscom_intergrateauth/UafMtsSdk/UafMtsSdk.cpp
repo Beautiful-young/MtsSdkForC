@@ -606,7 +606,7 @@ size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessi
 6-1. transactionConfirmationResponseWithJson
 transaction confirmation 요청 (입력 파라미터 json string)
 */
-size_t transactionConfirmationResponse(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
+size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 	InternalJsonMessage *itjsmsg = parse(jsmsg);
 
@@ -674,21 +674,51 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 	if (revChk && outDataTmp && outDataLenTmp > 0) {
 		
 		InternalJsonMessage *itjsmsg = parse(outDataTmp);
+		char *errorcodetmp = itjsmsg->errorcode;
+
+		if (errorcodetmp != NULL && strcmp(errorcodetmp, E_TYPE_SUCCESS_STR) == 0) {
+
+			char *authreqmsg = itjsmsg->authrequestmsg;
+			char *convertAuthreqmsg = setExtensionAuthReqB64Url(authreqmsg, NULL, NULL, b64nonid);
+			itjsmsg->authrequestmsg = convertAuthreqmsg;
+			char *converitjsmsg = makeIJMessageToJson(itjsmsg);
+
+			extensionAuthReqB64Url_free(convertAuthreqmsg);
+			retHttpDataFree(outDataTmp);
+
+			*outData = (char*)calloc(strlen(converitjsmsg) + 1, sizeof(char));
+			*outDataLen = strlen(converitjsmsg);
+			memcpy(*outData, converitjsmsg, strlen(converitjsmsg));
+			jsonRetFree(converitjsmsg);
+		}
+		else {
+			*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+			*outDataLen = outDataLenTmp;
+			memcpy(*outData, outDataTmp, outDataLenTmp);
+
+			retHttpDataFree(outDataTmp);
+		}
+		internalJsonMessageRelease(itjsmsg);
+		
+		/*
+		InternalJsonMessage *itjsmsg = parse(outDataTmp);
+		char *errorcodetmp = itjsmsg->errorcode;
+
 		char *authreqmsg = itjsmsg->authrequestmsg;
 		char *convertAuthreqmsg = setExtensionAuthReqB64Url(authreqmsg, NULL, NULL, b64nonid);
 		itjsmsg->authrequestmsg = convertAuthreqmsg;
 		char *converitjsmsg = makeIJMessageToJson(itjsmsg);
-		
-		internalJsonMessageRelease(itjsmsg);
+
 		extensionAuthReqB64Url_free(convertAuthreqmsg);
 		retHttpDataFree(outDataTmp);
 
-		*outData = (char*)calloc(strlen(converitjsmsg)+1, sizeof(char));
+		*outData = (char*)calloc(strlen(converitjsmsg) + 1, sizeof(char));
 		*outDataLen = strlen(converitjsmsg);
 		memcpy(*outData, converitjsmsg, strlen(converitjsmsg));
-		
 		jsonRetFree(converitjsmsg);
 
+		internalJsonMessageRelease(itjsmsg);
+		*/
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
@@ -1123,8 +1153,6 @@ int main(void) {
 
 	//transactionConfirmationRequestWithJson
 	/*
-	transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
-	*/
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"2\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"185d418312d1416abf3b1fbac717ef99\"}";
 	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
 	revChk = transactionConfirmationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
@@ -1139,6 +1167,196 @@ int main(void) {
 	fprintf(stdout, "outData : %s\n", outData);
 
 	retDataFree(outData);
+	*/
 
+	//transactionConfirmationResponse
+	/*
+	char *sessionid = NULL;
+	char *b64regresp = NULL;
+	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
+	
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	sessionid = rpwebsession;
+	revChk = transactionConfirmationResponse((char*)targetUrl, (char*)appid, (char*)rpwebsession, (char*)b64regresp, &outData, &outDataLen);
+	
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+	retDataFree(outData);
+	*/
+
+
+	//transactionConfirmationResponseWithJson
+/*
+	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"2\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"51d70066cdbd4c0a93bc5bc1adb30d7b\"}";
+
+	revChk = transactionConfirmationResponseWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	retDataFree(outData);
+	*/
+	
+	//simpleAuthRequest
+	/*
+	char *b64pubkey = NULL;
+	char *b64nonid = NULL;
+	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationrequestfromfc";
+	revChk = simpleAuthRequest((char*)targetUrl, (char*)userid, (char*)appid, b64pubkey, b64nonid, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+	retDataFree(outData);
+	*/
+
+	//simpleAuthRequestWithJson
+	//size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, char **outData, size_t *outDataLen);
+	/*
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"3\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"0b4e7edd5634486cbb5bd8dd9e4ab43c\"}";
+	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationrequestfromfc";
+	const char *b64nonid = "test nonid";
+
+	revChk = simpleAuthRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, (char*)b64nonid,&outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+
+	retDataFree(outData);
+	*/
+
+	//simpleAuthResponse
+	//size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen);
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationresponsefromfc";
+	char *sessionid = NULL;
+	char *b64authresp = NULL;
+	char rpwebsession[38];
+	size_t rc;
+	rc = getSessionID(rpwebsession);
+	sessionid = rpwebsession;
+	revChk = simpleAuthResponse((char*)targetUrl, (char*)appid, (char*)sessionid, (char*)b64authresp, &outData, &outDataLen);
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+	retDataFree(outData);
+	*/
+
+	//simpleAuthResponseWithJson
+	/*
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"3\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"3acbf31d8548468eaffa2f06432ca79f\"}";
+	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationresponsefromfc";
+	const char *b64nonid = "test nonid";
+
+	revChk = simpleAuthRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, (char*)b64nonid, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+
+	retDataFree(outData);
+	*/
+
+	//deregistrationRequest	
+	//size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);
+	/*
+	targetUrl = "https://fido.signkorea.com:9033/deregistrationrequestfromfc";
+	revChk = deregistrationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+
+	retDataFree(outData);
+	*/
+
+	//deregistrationRequestWithJson
+	
+	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":8,\"target\":16,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"ea1415d6ee2348ecb3f8741f127b8269\"}";
+	targetUrl = "https://fido.signkorea.com:9033/deregistrationrequestfromfc";
+	revChk = deregistrationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+
+	retDataFree(outData);
+	
 	system("pause");
 }

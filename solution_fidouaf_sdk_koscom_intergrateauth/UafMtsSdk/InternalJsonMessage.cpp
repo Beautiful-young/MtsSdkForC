@@ -52,6 +52,25 @@ char* makeIJMessageToJson(InternalJsonMessage *ijmsg) {
 
 	if (ijmsg->errormessage) {
 		json_object_set_new(root, "errormessage", json_string(ijmsg->errormessage));
+		/*
+		size_t strlength = strlen(ijmsg->errormessage);
+		//fprintf(stdout, "strlength : %d", strlength);
+		char tmperrmsg[256];
+
+		memset(tmperrmsg, 0x00, 256);
+		memcpy(tmperrmsg, ijmsg->errormessage, strlength);
+		//memcpy(tmperrmsg, ijmsg->errormessage, strlength);
+		json_object_set_new(root, "errormessage", json_stringn(tmperrmsg, strlength));
+		//json_object_set_new(root, "errormessage", json_string("error messge.."));
+		//json_object_set_new(root, "errormessage", json_string("내부메시지 파싱에 실패 하였습니다. FIDO Server로 부터 수신한 RegistRequest 메시지가 올바르지 않습니다."));
+		*/
+		/*
+		const char *tmperrmsg = "내부메시지 파싱에 실패 하였습니다. FIDO Server로 부터 수신한 RegistRequest 메시지가 올바르지 않습니다.";
+		size_t tmperrmsglen = strlen("내부메시지 파싱에 실패 하였습니다. FIDO Server로 부터 수신한 RegistRequest 메시지가 올바르지 않습니다.");
+		json_object_set_new(root, "errormessage", json_stringn(tmperrmsg, tmperrmsglen));
+		*/
+
+
 	}
 
 	if (ijmsg->rpwebsession) {

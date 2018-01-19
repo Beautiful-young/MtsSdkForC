@@ -22,7 +22,7 @@ size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
 	, char *contentType, char *contentEncodingType, char *content, char **outData, size_t *outDataLen);
 size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
 size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen);
-size_t transactionConfirmationResponse(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
+size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, char **outData, size_t *outDataLen);
 size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pubkey, char *b64nonid, char **outData, size_t *outDataLen);
 size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, char **outData, size_t *outDataLen);
 size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen);
