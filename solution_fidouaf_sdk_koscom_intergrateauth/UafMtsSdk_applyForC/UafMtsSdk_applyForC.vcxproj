@@ -77,6 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\bgmoon\source\repos\MtsSdkForC\solution_fidouaf_sdk_koscom_intergrateauth\UafMtsSdk;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Users\bgmoon\source\repos\MtsSdkForC\solution_fidouaf_sdk_koscom_intergrateauth\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

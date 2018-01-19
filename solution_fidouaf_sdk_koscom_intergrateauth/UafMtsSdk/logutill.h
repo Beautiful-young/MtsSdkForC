@@ -7,6 +7,10 @@
 #pragma warning(disable:4819)
 #endif
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 int initlogutillPath(char *path, char *used);
 int logutill(char *fmt, ...);
 void bin2hex(unsigned char *bin, int len, char *hex);
@@ -27,3 +31,7 @@ static unsigned char tbl_h2b[] = {
 
    /* tbl_h2b 접근 안전을 위해 할당한 공간 */
 static unsigned char tbl_h2b_post[255 - 'f'] = { 0, };
+
+#ifdef __cplusplus
+}
+#endif 

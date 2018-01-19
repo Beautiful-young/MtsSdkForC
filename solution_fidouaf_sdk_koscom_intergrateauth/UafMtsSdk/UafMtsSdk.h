@@ -9,6 +9,10 @@
 extern "C" {
 #endif
 
+static char SSL_PEMCERT_PATH_UAFSDK[128];
+static char LOG_USAGE_UAFSDK[4];
+static char LOG_PATH_UAFSDK[128];
+
 #ifdef WIN32
 #pragma warning(disable:4996)
 #pragma warning(disable:4267)

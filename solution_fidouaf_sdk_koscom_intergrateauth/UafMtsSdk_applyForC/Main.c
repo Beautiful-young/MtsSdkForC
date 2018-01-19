@@ -1,18 +1,73 @@
 #include "UafMtsSdk.h"
 
-int main(void) {
-	const char *path = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
-	const char *targetUrl = "https://fido.signkorea.com:9033/registrationrequestfromfc";
-	const char *userid = "test01";
-	const char *appid = "https://211.236.246.77:9024/appid";
+const char *PATH = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
+const char *USERID = "test01";
+const char *APPID = "https://211.236.246.77:9024/appid";
 
+const char *SERVERADDR = "https://fido.signkorea.com:9033";
+const char *REGISTRATIONREQUESTSUBURL = "/registrationrequestfromfc";
+const char *REGISTRATIONRESPONSESUBURL = "/registrationresponsefromfc";
+const char *AUTHENTICATIONREQUESTSUBURL = "/authenticationrequestfromfc";
+const char *AUTHENTICATIONRESPONSESUBURL = "/authenticationresponsefromfc";
+const char *TRANSACTIONREQUESTSUBURL = "/authenticationrequestfromfc";
+const char *TRANSACTIONRESPONSESUBURL = "/authenticationresponsefromfc";
+const char *SIMPLEAUTHREQUESTSUBURL = "/simpleauthenticationrequestfromfc";
+const char *SIMPLEAUTHRESPONSESUBURL = "/simpleauthenticationresponsefromfc";
+const char *DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
+
+
+void registration();
+
+/*
+Fido registratin test.
+*/
+void registration() {
 	size_t ret;
-	ret = Init(path);
+	size_t revChk = FALSE;
+	char *outData = NULL;
+	size_t outDataLen = 0;
+	char targetUrl[128];
+	ret = Init(PATH);
+	
 
+	logutill("test");
+
+	//1. Environment file initialization settings.
+	fprintf(stdout, "FIDO registration Test. \n");
+
+	if (ret) {
+		fprintf(stdout,"Check the UafMtsSdk environment file information. \n");
+		return;
+	}
+	//2. registration request
+	//js_regreqmsg »ùÇÃ ¸Þ½ÃÁö
+	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
+
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl,"%s%s", SERVERADDR, REGISTRATIONREQUESTSUBURL);
+	revChk = registrationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+
+	if (outData)
+		free(outData);
+
+	//3. registration response
+	const char *js_regrespmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
+
+
+}
+
+
+int main(void) {
+	registration();
+
+	/*
+	size_t ret;
 	size_t revChk = FALSE;
 	char *outData = NULL;
 	size_t outDataLen = 0;
 
+	ret = Init(path);
+	*/
 
 	/*
 	revChk = registrationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData , &outDataLen);
@@ -379,7 +434,7 @@ int main(void) {
 	*/
 
 	//deregistrationRequestWithJson
-
+	/*
 	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":8,\"target\":16,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"ea1415d6ee2348ecb3f8741f127b8269\"}";
 	targetUrl = "https://fido.signkorea.com:9033/deregistrationrequestfromfc";
 	revChk = deregistrationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
@@ -399,6 +454,6 @@ int main(void) {
 	fprintf(stdout, "tmpResult : %s\n", tmpResult);
 
 	retDataFree(outData);
-
+	*/
 	system("pause");
 }

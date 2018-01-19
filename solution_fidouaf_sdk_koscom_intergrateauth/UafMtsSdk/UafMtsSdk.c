@@ -1,10 +1,9 @@
 
 #include "UafMtsSdk.h"
 #include "commonDef.h"
+#include "logutill.h"
 
-static char SSL_PEMCERT_PATH_UAFSDK[128];
-static char LOG_USAGE_UAFSDK[4];
-static char LOG_PATH_UAFSDK[128];
+
 
 int Init(const char *path) {
 	static int once = 0; /* 한번만 호출, 지킴이 변수 */
@@ -60,6 +59,9 @@ int Init(const char *path) {
 		fprintf(stderr, "No 'LOG_PATH_UAFSDK' setting in configuration file.\n");
 		return 4;
 	}
+
+	initlogutillPath(LOG_PATH_UAFSDK, LOG_USAGE_UAFSDK);
+
 	once = 1;
 	config_destroy(&cfg);
 	return 0;
