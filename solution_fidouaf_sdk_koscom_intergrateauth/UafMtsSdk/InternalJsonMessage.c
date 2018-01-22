@@ -2,6 +2,8 @@
 #include <jansson.h>
 #include "InternalJsonMessage.h"
 
+
+
 char* makeIJMessageToJson(InternalJsonMessage *ijmsg) {
 	char *jsmsg = NULL;
 	json_t *root = json_object();
@@ -264,6 +266,96 @@ char* makeIJMessageToJson(InternalJsonMessage *ijmsg) {
 	jsmsg = json_dumps(root, 0);
 	json_decref(root);
 	return jsmsg;
+}
+
+/*
+오류코드 리턴
+*/
+char* getErrorCode(const char *input) {
+	char *reterrorcode=NULL;
+	json_t *request = NULL;
+	json_error_t error;
+
+	request = json_loads(input, 0, &error);
+
+	if (!request) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		return NULL;
+	}
+
+	if (!json_is_object(request)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		return NULL;
+	}
+
+	json_t *errorcode = json_object_get(request, "errorcode");
+	if (!json_is_string(errorcode)) {
+		fprintf(stderr, "error: request errorcode is null.\n");
+	}
+	else {
+		const char *errorcode_val = (char*)json_string_value(errorcode);
+		size_t errorcode_len = strlen(errorcode_val);
+		reterrorcode = (char*)calloc(errorcode_len + 1, sizeof(char));
+		memcpy(reterrorcode, errorcode_val, errorcode_len);
+		fprintf(stdout, "errorcode : %s\n", reterrorcode);
+	}
+	
+	json_decref(request);
+
+	return reterrorcode;
+}
+
+/*
+공개키 리턴
+*/
+size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen) {
+	size_t nRet = 0;
+
+	json_t *request = NULL;
+	json_error_t error;
+
+	request = json_loads(input, 0, &error);
+
+	if (!request) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		return 1;
+	}
+
+	if (!json_is_object(request)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		return 1;
+	}
+
+	json_t *b64pk = json_object_get(request, "b64pk");
+	if (!json_is_string(b64pk)) {
+		fprintf(stderr, "error: request b64pk is null.\n");
+		nRet = 1;
+	}
+	else {
+		const char* b64pk_val = json_string_value(b64pk);
+		size_t b64pk_len = strlen(b64pk_val);
+		size_t ret;
+		*outPubKeyLen = b64pk_len;
+		*outPubKey = (unsigned char*)calloc(*outPubKeyLen, sizeof(char));
+		
+		ret = Base64Url_Decode((const unsigned char*)b64pk_val, b64pk_len, *outPubKey, outPubKeyLen);
+		
+		if (ret) {
+			fprintf(stderr, "Base64 Decoding Error..");
+		}
+
+		/*
+		ijmess->b64pk = (char*)calloc(b64pk_len + 1, sizeof(char));
+		memcpy(ijmess->b64pk, b64pk_val, b64pk_len);
+		fprintf(stdout, "b64pk : %s\n", ijmess->b64pk);
+		*/
+	}
+
+
+
+	json_decref(request);
+
+	return nRet;
 }
 
 InternalJsonMessage* parse(const char *input) {

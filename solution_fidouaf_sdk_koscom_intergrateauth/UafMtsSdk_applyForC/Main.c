@@ -57,8 +57,60 @@ void registration() {
 }
 
 
+//
+void getPubKeyTest() {
+	char targetUrl[128];
+	char *outData = NULL;
+	size_t outDataLen = 0;
+
+	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"3\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"0b4e7edd5634486cbb5bd8dd9e4ab43c\"}";
+	size_t revChk = FALSE;
+
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, SIMPLEAUTHREQUESTSUBURL);
+
+	const char *b64nonid = "test nonid";
+
+	revChk = simpleAuthRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, (char*)b64nonid, &outData, &outDataLen);
+
+	size_t ret;
+
+	if (revChk) {
+		fprintf(stdout, "success. \n");
+	}
+	else {
+		fprintf(stdout, "fail. \n");
+	}
+	
+	fprintf(stdout, "outData : %d\n", outDataLen);
+	fprintf(stdout, "outData : %s\n", outData);
+
+	char tmpResult[4096];
+	memset(tmpResult, 0x00, 4096);
+	memcpy(tmpResult, outData, outDataLen);
+	fprintf(stdout, "tmpResult : %s\n", tmpResult);
+
+	retDataFree(outData);
+
+	unsigned char *outPubKey = NULL;
+	size_t outPubKeyLen;
+	ret = getPubKey((char*)js_regreqmsg, &outPubKey, &outPubKeyLen);
+
+	if (!ret) {
+		fprintf(stdout, "outPubKeyLen : %d\n", outPubKeyLen);
+
+	}
+	jsonRetFree(outPubKey);
+	
+
+
+}
+
+
 int main(void) {
-	registration();
+	//registration();
+	getPubKeyTest();
+
 
 	/*
 	size_t ret;
