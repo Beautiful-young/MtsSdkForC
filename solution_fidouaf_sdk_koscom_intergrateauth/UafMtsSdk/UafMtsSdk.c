@@ -67,6 +67,239 @@ int Init(const char *path) {
 	return 0;
 }
 
+
+/*
+오류코드 리턴
+*/
+char* getErrorCode(const char *input) {
+	char *reterrorcode = NULL;
+	json_t *request = NULL;
+	json_error_t error;
+
+	request = json_loads(input, 0, &error);
+
+	if (!request) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		return NULL;
+	}
+
+	if (!json_is_object(request)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		return NULL;
+	}
+
+	json_t *errorcode = json_object_get(request, "errorcode");
+	if (!json_is_string(errorcode)) {
+		fprintf(stderr, "error: request errorcode is null.\n");
+	}
+	else {
+		const char *errorcode_val = (char*)json_string_value(errorcode);
+		size_t errorcode_len = strlen(errorcode_val);
+		reterrorcode = (char*)calloc(errorcode_len + 1, sizeof(char));
+		memcpy(reterrorcode, errorcode_val, errorcode_len);
+		fprintf(stdout, "errorcode : %s\n", reterrorcode);
+	}
+
+	json_decref(request);
+
+	return reterrorcode;
+}
+
+/*
+내부 메시지로 부터 공개키 리턴 
+*/
+size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen) {
+	size_t nRet = 0;
+
+	json_t *request = NULL;
+	json_error_t error;
+
+	request = json_loads(input, 0, &error);
+
+	if (!request) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		return 1;
+	}
+
+	if (!json_is_object(request)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		return 1;
+	}
+
+	json_t *b64pk = json_object_get(request, "b64pk");
+	if (!json_is_string(b64pk)) {
+		fprintf(stderr, "error: request b64pk is null.\n");
+		nRet = 1;
+	}
+	else {
+		const char* b64pk_val = json_string_value(b64pk);
+		size_t b64pk_len = strlen(b64pk_val);
+		size_t ret;
+		*outPubKeyLen = b64pk_len;
+		*outPubKey = (unsigned char*)calloc(*outPubKeyLen, sizeof(char));
+
+		ret = Base64Url_Decode((const unsigned char*)b64pk_val, b64pk_len, *outPubKey, outPubKeyLen);
+
+		if (ret) {
+			fprintf(stderr, "Base64 Decoding Error..");
+		}
+
+		/*
+		ijmess->b64pk = (char*)calloc(b64pk_len + 1, sizeof(char));
+		memcpy(ijmess->b64pk, b64pk_val, b64pk_len);
+		fprintf(stdout, "b64pk : %s\n", ijmess->b64pk);
+		*/
+	}
+
+	json_decref(request);
+
+	return nRet;
+}
+
+/*
+Extention으로 부터 공개키 리턴 
+*/
+size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen) {
+	size_t nRet = 0;
+
+	json_t *request = NULL;
+	json_error_t error;
+
+	request = json_loads(input, 0, &error);
+
+	if (!request) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		return 1;
+	}
+
+	if (!json_is_object(request)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		return 1;
+	}
+
+	json_t *b64authreqmsg = json_object_get(request, "authrequestmsg");
+	if (!json_is_string(b64authreqmsg)) {
+		fprintf(stderr, "error: authrequestmsg is null.\n");
+		json_decref(request);
+		return 1;
+	}
+	else {
+		const char*b64authreqmsg_val = json_string_value(b64authreqmsg);
+		size_t b64authreqmsg_len = strlen(b64authreqmsg_val);
+		size_t ret;
+		char *outauthreqmsg=NULL;
+		size_t outauthreqmsg_len;
+
+		ret = Base64Url_Decode((const unsigned char*)b64authreqmsg_val, b64authreqmsg_len, &outauthreqmsg, &outauthreqmsg_len);
+
+		if (ret) {
+			fprintf(stderr, "Base64 Decoding Error..");
+			json_decref(request);
+			return 1;
+		}
+
+		json_t *authRequestRead = NULL;
+		json_t *authRequest_dec = NULL;
+
+		json_t *header_dec = NULL;//object
+		json_t *challenge_dec = NULL;//string
+		json_t *transaction_dec = NULL;//array
+		json_t *policy_dec = NULL;//object
+
+		json_t *upv_dec = NULL;
+		json_t *op_dec = NULL;
+		json_t *appID_dec = NULL;
+		json_t *serverData_dec = NULL;
+		json_t *exts_dec = NULL;
+
+		json_t *authRequestWriter = NULL;
+		json_t *authRequest_enc = NULL;
+
+		json_t *header_enc = NULL;//object
+
+								  //extention 설정
+		json_t *exts_list_enc = NULL;
+		json_t *exts_enc_simplekey = NULL;
+		json_t *exts_enc_devid = NULL;
+		json_t *exts_enc_nonid = NULL;
+
+		json_error_t error;
+		int authReqSize;
+		// json 
+		authRequestRead = json_loads((const char*)outauthreqmsg, 0, &error);
+
+		if (!authRequestRead) {
+			fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+
+			json_decref(request);
+			return 1;
+		}
+
+		if (!json_is_object(authRequestRead)) {
+			fprintf(stderr, "error : commit data is not an object\n");
+			
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+
+			json_decref(request);
+			return 1;
+		}
+
+		authReqSize = json_array_size(authRequestRead);
+
+		fprintf(stdout, "authReqSize : %d", authReqSize);
+
+		if (authReqSize < 1) {
+			fprintf(stderr, "error : authRequestRead array size is invalid.");
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+			json_decref(request);
+			json_decref(request);
+			return 1;
+		}
+
+		authRequest_dec = json_array_get(authRequestRead, 0);
+
+		if (!json_is_object(authRequest_dec)) {
+			fprintf(stderr, "error : authRequest_dec is not object.");
+			goto FINISH;
+		}
+
+		header_dec = json_object_get(authRequest_dec, "header");
+
+		if (!json_is_object(header_dec)) {
+			fprintf(stderr, "header_dec is not an object\n");
+			goto FINISH;
+		}
+
+
+
+		/*
+		*outPubKeyLen = b64pk_len;
+		*outPubKey = (unsigned char*)calloc(*outPubKeyLen, sizeof(char));
+
+		ret = Base64Url_Decode((const unsigned char*)b64pk_val, b64pk_len, *outPubKey, outPubKeyLen);
+
+		if (ret) {
+			fprintf(stderr, "Base64 Decoding Error..");
+		}
+		*/
+		/*
+		ijmess->b64pk = (char*)calloc(b64pk_len + 1, sizeof(char));
+		memcpy(ijmess->b64pk, b64pk_val, b64pk_len);
+		fprintf(stdout, "b64pk : %s\n", ijmess->b64pk);
+		*/
+	}
+
+	json_decref(request);
+
+	return nRet;
+}
+
+
 /*
 0. 공통 오류
 */

@@ -52,6 +52,8 @@ size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 void retDataFree(char *msg);
 char* getCommonErrMsg(const char* operation);
 
+char* getErrorCode(const char *input);
+size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen);
 
 #ifdef __cplusplus
 }

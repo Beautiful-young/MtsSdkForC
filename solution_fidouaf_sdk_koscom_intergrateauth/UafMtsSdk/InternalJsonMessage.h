@@ -78,5 +78,3 @@ void msgSturctFree(InternalJsonMessage *msg);
 void internalJsonMessageRelease(InternalJsonMessage* msgstruct);
 void jsonRetFree(void *data);
 char* makeIJMessageToJson(InternalJsonMessage *ijmsg);
-char* getErrorCode(const char *input);
-size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen);

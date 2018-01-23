@@ -51,6 +51,148 @@ void extensionAuthReqB64Url_free(char *ptr) {
 		free(ptr);
 }
 
+size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey, size_t *outPubKeyLen) {
+	size_t retVal = 0;
+	size_t ret;
+	size_t inlen;
+	size_t outlen;
+	unsigned char *b64authReq_b64Dec = NULL;
+	
+	if (p_b64authReq == NULL) {
+		fprintf(stderr, "p_b64authReq is NULL.");
+		return 1;
+	}
+
+	inlen = strlen(p_b64authReq);
+	outlen = inlen;
+	b64authReq_b64Dec = (unsigned char*)calloc(outlen, sizeof(char));
+
+	ret = Base64Url_Decode((const unsigned char*)p_b64authReq, inlen, b64authReq_b64Dec, &outlen);
+
+	if (ret) {
+		fprintf(stderr, "Base64 Decoding Error..");
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+		return 1;
+	}
+
+	json_t *authRequestRead = NULL;
+	json_t *authRequest_dec = NULL;
+
+	json_t *header_dec = NULL;//object
+	json_t *challenge_dec = NULL;//string
+	json_t *transaction_dec = NULL;//array
+	json_t *policy_dec = NULL;//object
+
+	json_t *upv_dec = NULL;
+	json_t *op_dec = NULL;
+	json_t *appID_dec = NULL;
+	json_t *serverData_dec = NULL;
+	json_t *exts_dec = NULL;
+
+	json_t *authRequestWriter = NULL;
+	json_t *authRequest_enc = NULL;
+
+	json_t *header_enc = NULL;//object
+
+							  //extention ¼³Á¤
+	json_t *exts_list_enc = NULL;
+	json_t *exts_enc_simplekey = NULL;
+	json_t *exts_enc_devid = NULL;
+	json_t *exts_enc_nonid = NULL;
+
+	json_error_t error;
+	int authReqSize;
+	// json 
+	authRequestRead = json_loads((const char*)b64authReq_b64Dec, 0, &error);
+
+	if (!authRequestRead) {
+		fprintf(stderr, "error : on line : %d %s\n", error.line, error.text);
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+		return 1;
+	}
+
+	if (!json_is_array(authRequestRead)) {
+		fprintf(stderr, "error : authRequestRead is not Array. : ");
+		
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+
+		if (authRequestRead)
+			json_decref(authRequestRead);
+		return 1;
+	}
+
+	authReqSize = json_array_size(authRequestRead);
+
+	fprintf(stdout, "authReqSize : %d", authReqSize);
+
+	if (authReqSize < 1) {
+		fprintf(stderr, "error : authRequestRead array size is invalid.");
+		
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+
+		if (authRequestRead)
+			json_decref(authRequestRead);
+
+		return 1;
+	}
+
+	authRequest_dec = json_array_get(authRequestRead, 0);
+
+	if (!json_is_object(authRequest_dec)) {
+		fprintf(stderr, "error : authRequest_dec is not object.");
+
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+
+		if (authRequestRead)
+			json_decref(authRequestRead);
+
+		return 1;
+	}
+
+	header_dec = json_object_get(authRequest_dec, "header");
+
+	if (!json_is_object(header_dec)) {
+		fprintf(stderr, "header_dec is not an object\n");
+		
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+
+		if (authRequest_dec)
+			json_decref(authRequest_dec);
+
+		if (authRequestRead)
+			json_decref(authRequestRead);
+
+		return 1;
+	}
+
+	exts_dec = json_object_get(header_dec, "exts");
+
+	if (!json_is_array(exts_dec)) {
+		fprintf(stderr, "error : exts_dec is not Array. : ");
+
+		if (b64authReq_b64Dec)
+			free(b64authReq_b64Dec);
+
+		if (authRequest_dec)
+			json_decref(authRequest_dec);
+
+		if (authRequestRead)
+			json_decref(authRequestRead);
+
+		return 1;
+	}
+
+
+
+	return retVal;
+}
+
 char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_devid, char* p_nonid) {
 	char* retVal=NULL;
 	char* retVal_tmp=NULL;
