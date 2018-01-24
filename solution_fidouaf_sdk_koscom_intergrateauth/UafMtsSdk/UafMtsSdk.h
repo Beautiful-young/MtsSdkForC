@@ -1,4 +1,8 @@
-#pragma once
+#ifndef __UafMtsSdk_H
+#define __UafMtsSdk_H
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,11 +24,13 @@ static char LOG_PATH_UAFSDK[128];
 #pragma warning(disable:4244)
 #pragma warning(disable:4819)
 #endif
+
 #include "common.h"
 #include "httputill.h"
 #include "InternalJsonMessage.h"
 #include "authreqmsg.h"
-
+#include "logutill.h"
+#include "Base64Decode.h"
 
 int Init(const char *path);
 size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);
@@ -54,7 +60,10 @@ char* getCommonErrMsg(const char* operation);
 
 char* getErrorCode(const char *input);
 size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen);
+size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen);
 
 #ifdef __cplusplus
 }
 #endif 
+
+#endif // !__UafMtsSdk_H

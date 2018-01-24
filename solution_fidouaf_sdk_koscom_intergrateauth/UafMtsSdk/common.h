@@ -1,4 +1,10 @@
-#pragma once
+#ifndef __common_H
+#define __common_H
+
+
+
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -77,3 +83,5 @@ static const int nDecodeUrl[256] = {
 
 static const int m_nMask[] = { 0, 1, 3, 7, 15, 31, 63, 127, 255 };
 /* 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF */
+
+#endif

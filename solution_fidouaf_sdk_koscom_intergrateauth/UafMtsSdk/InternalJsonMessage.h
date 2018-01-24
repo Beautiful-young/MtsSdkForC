@@ -1,4 +1,8 @@
-#pragma once
+#ifndef __InternalJsonMessage_H
+#define __InternalJsonMessage_H
+
+
+
 #include <sys/types.h>
 #include <stddef.h>
 typedef struct InternalJsonMessage {
@@ -78,3 +82,5 @@ void msgSturctFree(InternalJsonMessage *msg);
 void internalJsonMessageRelease(InternalJsonMessage* msgstruct);
 void jsonRetFree(void *data);
 char* makeIJMessageToJson(InternalJsonMessage *ijmsg);
+
+#endif // !__InternalJsonMessage_H

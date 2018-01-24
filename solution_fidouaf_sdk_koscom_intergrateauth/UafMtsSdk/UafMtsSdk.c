@@ -1,9 +1,6 @@
 
 #include "UafMtsSdk.h"
 #include "commonDef.h"
-#include "logutill.h"
-
-
 
 int Init(const char *path) {
 	static int once = 0; /* 한번만 호출, 지킴이 변수 */
@@ -187,10 +184,10 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 		const char*b64authreqmsg_val = json_string_value(b64authreqmsg);
 		size_t b64authreqmsg_len = strlen(b64authreqmsg_val);
 		size_t ret;
-		char *outauthreqmsg=NULL;
+		unsigned char *outauthreqmsg= (unsigned char*)calloc(b64authreqmsg_len, sizeof(char));;
 		size_t outauthreqmsg_len;
 
-		ret = Base64Url_Decode((const unsigned char*)b64authreqmsg_val, b64authreqmsg_len, &outauthreqmsg, &outauthreqmsg_len);
+		ret = Base64Url_Decode((const unsigned char*)b64authreqmsg_val, b64authreqmsg_len, outauthreqmsg, &outauthreqmsg_len);
 
 		if (ret) {
 			fprintf(stderr, "Base64 Decoding Error..");
@@ -237,7 +234,7 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 			json_decref(request);
 			return 1;
 		}
-
+		///오류시작
 		if (!json_is_object(authRequestRead)) {
 			fprintf(stderr, "error : commit data is not an object\n");
 			
@@ -327,7 +324,7 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 		
 		json_t *exts_list_dec = NULL;
 
-		for (int i = 0; i < exts_dec_arr_len; i++) {
+		for (size_t i = 0; i < exts_dec_arr_len; i++) {
 			exts_list_dec = json_array_get(exts_dec, i);
 			if (!json_is_object(exts_list_dec)) {
 				continue;
@@ -345,21 +342,17 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 						continue;
 					}
 					else {
-						json_t *exts_id_tmp = json_string_value(exts_id);
+						const char *exts_id_tmp = json_string_value(exts_id);
 						if (strcmp(exts_id_tmp, "simplepubkey") == 0) {//공개키 리턴 처리
 							json_t *exts_data = json_object_get(exts_list_dec, "data");
 
 							if (!json_is_object(exts_data)) {
-								if (exts_id_tmp)
-									free(exts_id_tmp);
 								json_decref(exts_id);
 								json_decref(exts_list_dec);
 								continue;
 							}
 
 							if (!json_is_string(exts_data)) {
-								if (exts_id_tmp)
-									free(exts_id_tmp);
 								json_decref(exts_data);
 								json_decref(exts_id);
 								json_decref(exts_list_dec);
@@ -377,10 +370,7 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 								ret_tmp = Base64Url_Decode((const unsigned char*)exts_data_val, exts_data_val_len, *outPubKey, outPubKeyLen);
 
 								if (ret_tmp) {
-									if (exts_id_tmp)
-										free(exts_id_tmp);
 
-									json_decref(exts_data_val);
 
 									json_decref(exts_data);
 									json_decref(exts_id);
@@ -399,12 +389,6 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 									return 1;
 								}
 								else {
-									
-
-									if (exts_id_tmp)
-										free(exts_id_tmp);
-
-									json_decref(exts_data_val);
 
 									json_decref(exts_data);
 									json_decref(exts_id);
@@ -425,8 +409,6 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 								}
 							}
 							else {
-								if (exts_id_tmp)
-									free(exts_id_tmp);
 								json_decref(exts_data);
 								json_decref(exts_id);
 								json_decref(exts_list_dec);
@@ -437,8 +419,6 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 
 						}
 						else {
-							if (exts_id_tmp)
-								free(exts_id_tmp);
 							json_decref(exts_id);
 							json_decref(exts_list_dec);
 							continue;
@@ -490,10 +470,10 @@ char* getCommonErrMsg(const char* operation) {
 	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOCLIENT));
 	json_object_set_new(root, "operation", json_string(operation));
 	json_object_set_new(root, "errorcode", json_string("0200F000"));
-	json_object_set_new(root, "errormessage", json_string("0x$Communication to agnet server failed."));
+	json_object_set_new(root, "errormessage", json_string("0x0200F000$Communication to agnet server failed."));
 	jsmsg = json_dumps(root, 0);
 	
-	retMsg = (char*)calloc(strlen(jsmsg), sizeof(char));
+	retMsg = (char*)calloc(strlen(jsmsg)+1, sizeof(char));
 	memcpy(retMsg, jsmsg, strlen(jsmsg));
 
 	json_decref(root);
@@ -1154,7 +1134,7 @@ size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, c
 		char *b64pubkey = itjsmsg->b64pk;
 
 		retVal = simpleAuthRequest(targetUrl, userid, appid, b64pubkey, b64nonid,  &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -1162,7 +1142,7 @@ size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, c
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 

@@ -1,5 +1,7 @@
+#include <stdio.h>
 #include "UafMtsSdk.h"
-#include "logutill.h"
+
+const char* SUCCESS_STR = "00000000";
 
 const char *PATH = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
 const char *USERID = "test01";
@@ -16,6 +18,7 @@ const char *SIMPLEAUTHREQUESTSUBURL = "/simpleauthenticationrequestfromfc";
 const char *SIMPLEAUTHRESPONSESUBURL = "/simpleauthenticationresponsefromfc";
 const char *DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
 
+const char *TESTSIMREQMSG = "{\"version\":\"1.0\",\"source\":8,\"target\":64,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"7f0d2ba098c445edbb457737b80a1d82\",\"errorcode\":\"00000000\",\"operation\":\"auth\",\"authrequestmsg\":\"W3siaGVhZGVyIjp7InVwdiI6eyJtYWpvciI6MSwibWlub3IiOjB9LCJvcCI6IkF1dGgiLCJhcHBJRCI6Imh0dHBzOi8vMjExLjIzNi4yNDYuNzc6OTAyNC9hcHBpZCIsInNlcnZlckRhdGEiOiJlMjNmNjUyMGJjZmU0MjVmOTZjM2YxYTdjMjJmNzg0OSIsImV4dHMiOlt7ImlkIjoic2ltcGxlcHVia2V5IiwiZGF0YSI6ImNIVmliR2xqSUd0bGVRIiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX0seyJpZCI6Im5vbmlkIiwiZGF0YSI6Ilhib00wQ1hOL1g4bGJuL0JSdURKd1dYcWg2aUp6MHdkR3VseDNQUm43Mnc9IiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX1dfSwiY2hhbGxlbmdlIjoiZTRiZGI3OGU1NDQwNDIzYmExODNlMTNhYWM3N2E0NTMiLCJwb2xpY3kiOnt9fV0\",\"authenticationmode\":\"3\"}";
 
 void registration();
 void getPubKeyTest();
@@ -32,7 +35,7 @@ void registration() {
 	ret = Init(PATH);
 	
 
-	logutill("test");
+	//logutill("test");
 
 	//1. Environment file initialization settings.
 	fprintf(stdout, "FIDO registration Test. \n");
@@ -86,16 +89,47 @@ void getPubKeyTest() {
 	
 	fprintf(stdout, "outData : %d\n", outDataLen);
 	fprintf(stdout, "outData : %s\n", outData);
-
+	/*
 	char tmpResult[4096];
 	memset(tmpResult, 0x00, 4096);
 	memcpy(tmpResult, outData, outDataLen);
 	fprintf(stdout, "tmpResult : %s\n", tmpResult);
 
 	retDataFree(outData);
+	*/
+
+	
+
+	//char* chpErrorcode = getErrorCode(tmpResult);
+	char* chpErrorcode = getErrorCode(TESTSIMREQMSG);
+	
+	if (!chpErrorcode) {
+		fprintf(stdout, "chpErrorcode is NULL. \n");
+		return;
+	}
+	if (strcmp((char*)SUCCESS_STR, chpErrorcode) != 0){
+		//error
+		fprintf(stdout, "chpErrorcode : %s \n", chpErrorcode);
+		if (chpErrorcode)
+			retDataFree(chpErrorcode);
+
+		return;
+	}
 
 	unsigned char *outPubKey = NULL;
 	size_t outPubKeyLen;
+	//ret = getPubKeyFromExtention(tmpResult, &outPubKey, &outPubKeyLen);
+	ret = getPubKeyFromExtention(TESTSIMREQMSG, &outPubKey, &outPubKeyLen);
+	if (!ret) {
+		fprintf(stdout, "outPubKeyLen : %d\n", outPubKeyLen);
+	}
+	else {
+		fprintf(stdout, "Failed to acquire public key.\n");
+	}
+	
+	jsonRetFree(outPubKey);
+
+	/*
 	ret = getPubKey((char*)js_regreqmsg, &outPubKey, &outPubKeyLen);
 
 	if (!ret) {
@@ -103,6 +137,9 @@ void getPubKeyTest() {
 
 	}
 	jsonRetFree(outPubKey);
+	*/
+
+
 	
 
 

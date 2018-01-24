@@ -1,4 +1,9 @@
-#pragma once
+#ifndef __logutill_H
+#define __logutill_H
+
+
+
+
 #ifdef WIN32
 #pragma warning(disable:4996)
 #pragma warning(disable:4267)
@@ -35,3 +40,6 @@ static unsigned char tbl_h2b_post[255 - 'f'] = { 0, };
 #ifdef __cplusplus
 }
 #endif 
+
+
+#endif // !__logutill_H

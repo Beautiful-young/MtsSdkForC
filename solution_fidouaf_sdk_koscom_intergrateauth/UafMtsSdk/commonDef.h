@@ -1,4 +1,7 @@
-#pragma once
+#ifndef __commonDef_H
+#define __commonDef_H
+
+
 
 const char *E_TYPE_SUCCESS_STR = "00000000";
 
@@ -39,3 +42,5 @@ const char*AUTHENTICATIONMODE_REG = "1";
 const char*AUTHENTICATIONMODE_AUTH = "1";
 const char*AUTHENTICATIONMODE_TC = "2";
 const char*AUTHENTICATIONMODE_SS = "3";
+
+#endif // !__commonDef_H
