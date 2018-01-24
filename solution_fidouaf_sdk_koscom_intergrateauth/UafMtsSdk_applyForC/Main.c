@@ -1,4 +1,5 @@
 #include "UafMtsSdk.h"
+#include "logutill.h"
 
 const char *PATH = "E:\\env_common\\UAF\\koscom_it\\client\\env\\uafsdk\\uafsdk4c.properties";
 const char *USERID = "test01";
@@ -17,6 +18,7 @@ const char *DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
 
 
 void registration();
+void getPubKeyTest();
 
 /*
 Fido registratin test.

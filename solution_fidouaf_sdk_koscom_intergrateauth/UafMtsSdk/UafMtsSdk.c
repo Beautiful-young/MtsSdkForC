@@ -224,7 +224,7 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 		json_t *exts_enc_nonid = NULL;
 
 		json_error_t error;
-		int authReqSize;
+		size_t authReqSize;
 		// json 
 		authRequestRead = json_loads((const char*)outauthreqmsg, 0, &error);
 
@@ -244,6 +244,8 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 			if (outauthreqmsg)
 				free(outauthreqmsg);
 
+			json_decref(authRequestRead);
+
 			json_decref(request);
 			return 1;
 		}
@@ -254,10 +256,12 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 
 		if (authReqSize < 1) {
 			fprintf(stderr, "error : authRequestRead array size is invalid.");
+
 			if (outauthreqmsg)
 				free(outauthreqmsg);
+			json_decref(authRequestRead);
 			json_decref(request);
-			json_decref(request);
+			
 			return 1;
 		}
 
@@ -265,17 +269,190 @@ size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size
 
 		if (!json_is_object(authRequest_dec)) {
 			fprintf(stderr, "error : authRequest_dec is not object.");
-			goto FINISH;
+
+
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+			json_decref(authRequestRead);
+			json_decref(request);
+
+			return 1;
 		}
 
 		header_dec = json_object_get(authRequest_dec, "header");
 
 		if (!json_is_object(header_dec)) {
 			fprintf(stderr, "header_dec is not an object\n");
-			goto FINISH;
+
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+			
+			json_decref(authRequest_dec);
+			json_decref(authRequestRead);
+			json_decref(request);
+			return 1;
 		}
 
+		exts_dec = json_object_get(header_dec, "exts");
+		
+		if (!json_is_object(exts_dec)) {
+			fprintf(stderr, "exts_dec is not an object\n");
+			if (outauthreqmsg)
+				free(outauthreqmsg);
 
+			json_decref(header_dec);
+			json_decref(authRequest_dec);
+			json_decref(authRequestRead);
+			json_decref(request);
+			return 1;
+		}
+		
+		size_t exts_dec_arr_len = json_array_size(exts_dec);
+
+		if (exts_dec_arr_len < 1) {
+			fprintf(stderr, "error : header_dec array size is invalid.");
+
+			if (outauthreqmsg)
+				free(outauthreqmsg);
+
+			json_decref(exts_dec);
+
+			json_decref(header_dec);
+			json_decref(authRequest_dec);
+			json_decref(authRequestRead);
+			json_decref(request);
+
+			return 1;
+		}
+		
+		json_t *exts_list_dec = NULL;
+
+		for (int i = 0; i < exts_dec_arr_len; i++) {
+			exts_list_dec = json_array_get(exts_dec, i);
+			if (!json_is_object(exts_list_dec)) {
+				continue;
+			}else {
+				json_t *exts_id = json_object_get(exts_list_dec,"id");
+
+				if (!json_is_object(exts_id)) {
+					json_decref(exts_list_dec);
+					continue;
+				}
+				else {
+					if (!json_is_string(exts_id)) {
+						json_decref(exts_id);
+						json_decref(exts_list_dec);
+						continue;
+					}
+					else {
+						json_t *exts_id_tmp = json_string_value(exts_id);
+						if (strcmp(exts_id_tmp, "simplepubkey") == 0) {//공개키 리턴 처리
+							json_t *exts_data = json_object_get(exts_list_dec, "data");
+
+							if (!json_is_object(exts_data)) {
+								if (exts_id_tmp)
+									free(exts_id_tmp);
+								json_decref(exts_id);
+								json_decref(exts_list_dec);
+								continue;
+							}
+
+							if (!json_is_string(exts_data)) {
+								if (exts_id_tmp)
+									free(exts_id_tmp);
+								json_decref(exts_data);
+								json_decref(exts_id);
+								json_decref(exts_list_dec);
+								continue;
+							}
+
+							const char *exts_data_val = json_string_value(exts_data);
+							if (exts_data_val) {
+								size_t exts_data_val_len = strlen(exts_data_val);
+								size_t ret_tmp;
+
+								*outPubKeyLen = outauthreqmsg_len;
+								*outPubKey = (unsigned char*)calloc(outauthreqmsg_len, sizeof(char));
+
+								ret_tmp = Base64Url_Decode((const unsigned char*)exts_data_val, exts_data_val_len, *outPubKey, outPubKeyLen);
+
+								if (ret_tmp) {
+									if (exts_id_tmp)
+										free(exts_id_tmp);
+
+									json_decref(exts_data_val);
+
+									json_decref(exts_data);
+									json_decref(exts_id);
+									json_decref(exts_list_dec);
+
+									if (outauthreqmsg)
+										free(outauthreqmsg);
+
+									json_decref(exts_dec);
+
+									json_decref(header_dec);
+									json_decref(authRequest_dec);
+									json_decref(authRequestRead);
+									json_decref(request);
+
+									return 1;
+								}
+								else {
+									
+
+									if (exts_id_tmp)
+										free(exts_id_tmp);
+
+									json_decref(exts_data_val);
+
+									json_decref(exts_data);
+									json_decref(exts_id);
+									json_decref(exts_list_dec);
+
+									if (outauthreqmsg)
+										free(outauthreqmsg);
+
+									json_decref(exts_dec);
+
+									json_decref(header_dec);
+									json_decref(authRequest_dec);
+									json_decref(authRequestRead);
+									json_decref(request);
+
+									return 0;
+
+								}
+							}
+							else {
+								if (exts_id_tmp)
+									free(exts_id_tmp);
+								json_decref(exts_data);
+								json_decref(exts_id);
+								json_decref(exts_list_dec);
+								continue;
+
+							}
+
+
+						}
+						else {
+							if (exts_id_tmp)
+								free(exts_id_tmp);
+							json_decref(exts_id);
+							json_decref(exts_list_dec);
+							continue;
+						}
+					}
+				}
+
+
+
+			}
+
+
+
+		}
 
 		/*
 		*outPubKeyLen = b64pk_len;
