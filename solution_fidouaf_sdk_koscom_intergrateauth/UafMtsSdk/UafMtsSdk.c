@@ -28,7 +28,7 @@ int Init(const char *path) {
 
 	//ssl cert
 	if (config_lookup_string(&cfg, "SSL_PEMCERT_PATH_UAFSDK", &str_ssl_pemcert_path_uafsdk)) {
-		printf("SSL_PEMCERT_PATH_UAFSDK : %s\n\n", str_ssl_pemcert_path_uafsdk);
+		//printf("SSL_PEMCERT_PATH_UAFSDK : %s\n\n", str_ssl_pemcert_path_uafsdk);
 		strcpy(SSL_PEMCERT_PATH_UAFSDK, str_ssl_pemcert_path_uafsdk);
 
 	}
@@ -39,7 +39,7 @@ int Init(const char *path) {
 
 	//log usage 'yes' or 'no'
 	if (config_lookup_string(&cfg, "LOG_USAGE_UAFSDK", &str_log_usage_uafsdk)) {
-		printf("LOG_USAGE_UAFSDK : %s\n\n", str_log_usage_uafsdk);
+		//printf("LOG_USAGE_UAFSDK : %s\n\n", str_log_usage_uafsdk);
 		strcpy(LOG_USAGE_UAFSDK, str_log_usage_uafsdk);
 	}
 	else {
@@ -49,7 +49,7 @@ int Init(const char *path) {
 
 	//log path
 	if (config_lookup_string(&cfg, "LOG_PATH_UAFSDK", &str_log_path_uafsdk)) {
-		printf("LOG_PATH_UAFSDK : %s\n\n", str_log_path_uafsdk);
+		//printf("LOG_PATH_UAFSDK : %s\n\n", str_log_path_uafsdk);
 		strcpy(LOG_PATH_UAFSDK, str_log_path_uafsdk);
 	}
 	else {
@@ -157,299 +157,183 @@ size_t getPubKey(const char *input, unsigned char **outPubKey, size_t *outPubKey
 Extention으로 부터 공개키 리턴 
 */
 size_t getPubKeyFromExtention(const char *input, unsigned char **outPubKey, size_t *outPubKeyLen) {
-	size_t nRet = 0;
+	size_t nRet = 1;
 
 	json_t *request = NULL;
 	json_error_t error;
+
+	json_t *authRequestRead = NULL;
+	json_t *authRequest_dec = NULL;
+	json_t *header_dec = NULL;//object
+	json_t *exts_dec = NULL;
+	json_t *header_enc = NULL;//object
+	json_t *exts_list_enc = NULL;
+	json_t *exts_enc_simplekey = NULL;
+	json_t *exts_enc_devid = NULL;
+	json_t *exts_enc_nonid = NULL;
+	size_t authReqSize;
+
+	size_t b64authreqmsg_len;
+	size_t ret;
+	unsigned char *outauthreqmsg = NULL;
+	size_t outauthreqmsg_len;
+	const char*b64authreqmsg_val = NULL;
 
 	request = json_loads(input, 0, &error);
 
 	if (!request) {
 		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
-		return 1;
+		nRet=1;
+		goto FINISH;
 	}
 
 	if (!json_is_object(request)) {
 		fprintf(stderr, "error : commit data is not an object\n");
-		return 1;
+		nRet = 1;
+		goto FINISH;
 	}
 
 	json_t *b64authreqmsg = json_object_get(request, "authrequestmsg");
 	if (!json_is_string(b64authreqmsg)) {
 		fprintf(stderr, "error: authrequestmsg is null.\n");
-		json_decref(request);
-		return 1;
+		nRet = 1;
+		goto FINISH;
 	}
-	else {
-		const char*b64authreqmsg_val = json_string_value(b64authreqmsg);
-		size_t b64authreqmsg_len = strlen(b64authreqmsg_val);
-		size_t ret;
-		unsigned char *outauthreqmsg= (unsigned char*)calloc(b64authreqmsg_len, sizeof(char));;
-		size_t outauthreqmsg_len;
 
-		ret = Base64Url_Decode((const unsigned char*)b64authreqmsg_val, b64authreqmsg_len, outauthreqmsg, &outauthreqmsg_len);
+	b64authreqmsg_val = json_string_value(b64authreqmsg);
+	b64authreqmsg_len = strlen(b64authreqmsg_val);
+	outauthreqmsg= (unsigned char*)calloc(b64authreqmsg_len, sizeof(char));;
 
-		if (ret) {
-			fprintf(stderr, "Base64 Decoding Error..");
-			json_decref(request);
-			return 1;
-		}
+	ret = Base64Url_Decode((const unsigned char*)b64authreqmsg_val, b64authreqmsg_len, outauthreqmsg, &outauthreqmsg_len);
 
-		json_t *authRequestRead = NULL;
-		json_t *authRequest_dec = NULL;
+	if (ret) {
+		fprintf(stderr, "Base64 Decoding Error..");
+		nRet = 1;
+		goto FINISH;
+	}
 
-		json_t *header_dec = NULL;//object
-		json_t *challenge_dec = NULL;//string
-		json_t *transaction_dec = NULL;//array
-		json_t *policy_dec = NULL;//object
+	// json 
+	authRequestRead = json_loads((const char*)outauthreqmsg, 0, &error);
+	
+	if (!authRequestRead) {
+		fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+		nRet = 1;
+		goto FINISH;
+	}
+	///오류시작
+	if (!json_is_array(authRequestRead)) {
+		fprintf(stderr, "error : commit data is not an object\n");
+		nRet = 1;
+		goto FINISH;
+	}
 
-		json_t *upv_dec = NULL;
-		json_t *op_dec = NULL;
-		json_t *appID_dec = NULL;
-		json_t *serverData_dec = NULL;
-		json_t *exts_dec = NULL;
+	authReqSize = json_array_size(authRequestRead);
+	fprintf(stdout, "authReqSize : %d", authReqSize);
 
-		json_t *authRequestWriter = NULL;
-		json_t *authRequest_enc = NULL;
+	if (authReqSize < 1) {
+		fprintf(stderr, "error : authRequestRead array size is invalid.");
+		nRet = 1;
+		goto FINISH;
+	}
 
-		json_t *header_enc = NULL;//object
+	authRequest_dec = json_array_get(authRequestRead, 0);
 
-								  //extention 설정
-		json_t *exts_list_enc = NULL;
-		json_t *exts_enc_simplekey = NULL;
-		json_t *exts_enc_devid = NULL;
-		json_t *exts_enc_nonid = NULL;
+	if (!json_is_object(authRequest_dec)) {
+		fprintf(stderr, "error : authRequest_dec is not object.");
+		nRet = 1;
+		goto FINISH;
+	}
 
-		json_error_t error;
-		size_t authReqSize;
-		// json 
-		authRequestRead = json_loads((const char*)outauthreqmsg, 0, &error);
+	header_dec = json_object_get(authRequest_dec, "header");
 
-		if (!authRequestRead) {
-			fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
+	if (!json_is_object(header_dec)) {
+		fprintf(stderr, "header_dec is not an object\n");
+		nRet = 1;
+		goto FINISH;
+	}
 
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-
-			json_decref(request);
-			return 1;
-		}
-		///오류시작
-		if (!json_is_object(authRequestRead)) {
-			fprintf(stderr, "error : commit data is not an object\n");
-			
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-
-			json_decref(authRequestRead);
-
-			json_decref(request);
-			return 1;
-		}
-
-		authReqSize = json_array_size(authRequestRead);
-
-		fprintf(stdout, "authReqSize : %d", authReqSize);
-
-		if (authReqSize < 1) {
-			fprintf(stderr, "error : authRequestRead array size is invalid.");
-
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-			json_decref(authRequestRead);
-			json_decref(request);
-			
-			return 1;
-		}
-
-		authRequest_dec = json_array_get(authRequestRead, 0);
-
-		if (!json_is_object(authRequest_dec)) {
-			fprintf(stderr, "error : authRequest_dec is not object.");
-
-
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-			json_decref(authRequestRead);
-			json_decref(request);
-
-			return 1;
-		}
-
-		header_dec = json_object_get(authRequest_dec, "header");
-
-		if (!json_is_object(header_dec)) {
-			fprintf(stderr, "header_dec is not an object\n");
-
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-			
-			json_decref(authRequest_dec);
-			json_decref(authRequestRead);
-			json_decref(request);
-			return 1;
-		}
-
-		exts_dec = json_object_get(header_dec, "exts");
+	exts_dec = json_object_get(header_dec, "exts");
 		
-		if (!json_is_object(exts_dec)) {
-			fprintf(stderr, "exts_dec is not an object\n");
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-
-			json_decref(header_dec);
-			json_decref(authRequest_dec);
-			json_decref(authRequestRead);
-			json_decref(request);
-			return 1;
-		}
+	if (!json_is_array(exts_dec)) {
+		fprintf(stderr, "exts_dec is not an object\n");
+		nRet = 1;
+		goto FINISH;
+	}
 		
-		size_t exts_dec_arr_len = json_array_size(exts_dec);
+	size_t exts_dec_arr_len = json_array_size(exts_dec);
 
-		if (exts_dec_arr_len < 1) {
-			fprintf(stderr, "error : header_dec array size is invalid.");
-
-			if (outauthreqmsg)
-				free(outauthreqmsg);
-
-			json_decref(exts_dec);
-
-			json_decref(header_dec);
-			json_decref(authRequest_dec);
-			json_decref(authRequestRead);
-			json_decref(request);
-
-			return 1;
-		}
+	if (exts_dec_arr_len < 1) {
+		fprintf(stderr, "error : header_dec array size is invalid.");
+		nRet = 1;
+		goto FINISH;
+	}
 		
-		json_t *exts_list_dec = NULL;
+	json_t *exts_list_dec = NULL;
 
-		for (size_t i = 0; i < exts_dec_arr_len; i++) {
-			exts_list_dec = json_array_get(exts_dec, i);
-			if (!json_is_object(exts_list_dec)) {
+	for (size_t i = 0; i < exts_dec_arr_len; i++) {
+		exts_list_dec = json_array_get(exts_dec, i);
+		if (!json_is_object(exts_list_dec)) {
+			continue;
+		}else {
+			json_t *exts_id = json_object_get(exts_list_dec,"id");
+
+			if (!json_is_string(exts_id)) {
+				json_decref(exts_id);
+				json_decref(exts_list_dec);
 				continue;
-			}else {
-				json_t *exts_id = json_object_get(exts_list_dec,"id");
+			}
+			else {
+				const char *exts_id_tmp = json_string_value(exts_id);
+				if (strcmp(exts_id_tmp, "simplepubkey") == 0) {//공개키 리턴 처리
+					json_t *exts_data = json_object_get(exts_list_dec, "data");
 
-				if (!json_is_object(exts_id)) {
-					json_decref(exts_list_dec);
-					continue;
-				}
-				else {
-					if (!json_is_string(exts_id)) {
+					if (!json_is_string(exts_data)) {
+						json_decref(exts_data);
 						json_decref(exts_id);
 						json_decref(exts_list_dec);
 						continue;
 					}
-					else {
-						const char *exts_id_tmp = json_string_value(exts_id);
-						if (strcmp(exts_id_tmp, "simplepubkey") == 0) {//공개키 리턴 처리
-							json_t *exts_data = json_object_get(exts_list_dec, "data");
 
-							if (!json_is_object(exts_data)) {
-								json_decref(exts_id);
-								json_decref(exts_list_dec);
-								continue;
-							}
+					const char *exts_data_val = json_string_value(exts_data);
+					if (exts_data_val) {
+						size_t exts_data_val_len = strlen(exts_data_val);
+						size_t ret_tmp;
 
-							if (!json_is_string(exts_data)) {
-								json_decref(exts_data);
-								json_decref(exts_id);
-								json_decref(exts_list_dec);
-								continue;
-							}
+						*outPubKeyLen = outauthreqmsg_len;
+						*outPubKey = (unsigned char*)calloc(outauthreqmsg_len, sizeof(char));
 
-							const char *exts_data_val = json_string_value(exts_data);
-							if (exts_data_val) {
-								size_t exts_data_val_len = strlen(exts_data_val);
-								size_t ret_tmp;
+						ret_tmp = Base64Url_Decode((const unsigned char*)exts_data_val, exts_data_val_len, *outPubKey, outPubKeyLen);
 
-								*outPubKeyLen = outauthreqmsg_len;
-								*outPubKey = (unsigned char*)calloc(outauthreqmsg_len, sizeof(char));
-
-								ret_tmp = Base64Url_Decode((const unsigned char*)exts_data_val, exts_data_val_len, *outPubKey, outPubKeyLen);
-
-								if (ret_tmp) {
-
-
-									json_decref(exts_data);
-									json_decref(exts_id);
-									json_decref(exts_list_dec);
-
-									if (outauthreqmsg)
-										free(outauthreqmsg);
-
-									json_decref(exts_dec);
-
-									json_decref(header_dec);
-									json_decref(authRequest_dec);
-									json_decref(authRequestRead);
-									json_decref(request);
-
-									return 1;
-								}
-								else {
-
-									json_decref(exts_data);
-									json_decref(exts_id);
-									json_decref(exts_list_dec);
-
-									if (outauthreqmsg)
-										free(outauthreqmsg);
-
-									json_decref(exts_dec);
-
-									json_decref(header_dec);
-									json_decref(authRequest_dec);
-									json_decref(authRequestRead);
-									json_decref(request);
-
-									return 0;
-
-								}
-							}
-							else {
-								json_decref(exts_data);
-								json_decref(exts_id);
-								json_decref(exts_list_dec);
-								continue;
-
-							}
-
-
+						if (ret_tmp) {
+							nRet = 1;
+							goto FINISH;
 						}
 						else {
-							json_decref(exts_id);
-							json_decref(exts_list_dec);
-							continue;
+							nRet = 0;
+							goto FINISH;
 						}
 					}
+					else {
+						json_decref(exts_data);
+						json_decref(exts_id);
+						json_decref(exts_list_dec);
+						continue;
+					}
 				}
-
-
-
+				else {
+					json_decref(exts_id);
+					json_decref(exts_list_dec);
+					continue;
+				}
 			}
-
-
-
 		}
-
-		/*
-		*outPubKeyLen = b64pk_len;
-		*outPubKey = (unsigned char*)calloc(*outPubKeyLen, sizeof(char));
-
-		ret = Base64Url_Decode((const unsigned char*)b64pk_val, b64pk_len, *outPubKey, outPubKeyLen);
-
-		if (ret) {
-			fprintf(stderr, "Base64 Decoding Error..");
-		}
-		*/
-		/*
-		ijmess->b64pk = (char*)calloc(b64pk_len + 1, sizeof(char));
-		memcpy(ijmess->b64pk, b64pk_val, b64pk_len);
-		fprintf(stdout, "b64pk : %s\n", ijmess->b64pk);
-		*/
 	}
+
+FINISH:
+	if (outauthreqmsg)
+		free(outauthreqmsg);
+	
+	json_decref(authRequestRead);
 
 	json_decref(request);
 
@@ -503,25 +387,24 @@ size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **ou
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
 	
 	boolean revChk;
 	char *outDataTmp = NULL;
 	size_t outDataLenTmp = 0;
-
+	
+	logutill("registrationRequest send data : %s\n", jsmsg);
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if(revChk && outDataTmp && outDataLenTmp > 0){
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if(!revChk && outDataTmp && outDataLenTmp > 0){
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
-
 		retHttpDataFree(outDataTmp);
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -529,6 +412,8 @@ size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **ou
 			free(temErrMsg);
 	}
 	
+	logutill("registrationRequest received data : %s\n", *outData);
+
 	json_decref(root);
 	return retVal;
 }
@@ -548,7 +433,7 @@ size_t registrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData,
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
 		retVal = registrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -556,7 +441,7 @@ size_t registrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData,
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -589,8 +474,8 @@ size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char 
 	json_object_set_new(root, "regresponsemsg", json_string(b64regresp));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
-
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("registrationResponse send data : %s\n", jsmsg);
 	boolean revChk;
 	char *outDataTmp = NULL;
 	size_t outDataLenTmp = 0;
@@ -598,8 +483,8 @@ size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char 
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -607,16 +492,15 @@ size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char 
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("registrationResponse received data : %s\n", *outData);
 	json_decref(root);
-
 	return retVal;
 }
 
@@ -637,7 +521,7 @@ size_t registrationResponseWithJson(char *targetUrl, char *jsmsg, char **outData
 
 
 		retVal = registrationResponse(targetUrl, appid, sessionid, regresponsemsg, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -645,7 +529,7 @@ size_t registrationResponseWithJson(char *targetUrl, char *jsmsg, char **outData
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_REG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -680,7 +564,8 @@ size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("authenticationRequest send data : %s\n", jsmsg);
 
 	boolean revChk;
 	char *outDataTmp = NULL;
@@ -689,8 +574,8 @@ size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -698,14 +583,14 @@ size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("authenticationRequest received data : %s\n", *outData);
 	json_decref(root);
 	return retVal;
 }
@@ -726,7 +611,7 @@ size_t authenticationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
 		retVal = authenticationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -734,7 +619,7 @@ size_t authenticationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -766,7 +651,7 @@ size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, cha
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("authenticationResponse send data : %s\n", jsmsg);
 
 	boolean revChk;
 	char *outDataTmp = NULL;
@@ -775,8 +660,8 @@ size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, cha
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -784,16 +669,15 @@ size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, cha
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg)+1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("authenticationResponse received data : %s\n", *outData);
 	json_decref(root);
-
 	return retVal;
 }
 
@@ -814,7 +698,7 @@ size_t authenticationResponseWithJson(char *targetUrl, char *jsmsg, char **outDa
 
 
 		retVal = authenticationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -822,7 +706,7 @@ size_t authenticationResponseWithJson(char *targetUrl, char *jsmsg, char **outDa
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -862,8 +746,8 @@ size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
-
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("transactionConfirmationRequest send data : %s\n", jsmsg);
 	boolean revChk;
 	char *outDataTmp = NULL;
 	size_t outDataLenTmp = 0;
@@ -871,8 +755,8 @@ size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -880,14 +764,14 @@ size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("transactionConfirmationRequest received data : %s\n", *outData);
 	json_decref(root);
 	return retVal;
 
@@ -913,7 +797,7 @@ size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char
 
 		retVal = transactionConfirmationRequest(targetUrl, userid, appid, contentType, contentEncodingType, content, &outDataTmp, &outDataLenTmp);
 
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -921,7 +805,7 @@ size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -953,8 +837,8 @@ size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessi
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
-
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("transactionConfirmationResponse send data : %s\n", jsmsg);
 	boolean revChk;
 	char *outDataTmp = NULL;
 	size_t outDataLenTmp = 0;
@@ -962,8 +846,8 @@ size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessi
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -971,14 +855,14 @@ size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessi
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("transactionConfirmationResponse received data : %s\n", *outData);
 	json_decref(root);
 
 	return retVal;
@@ -1001,7 +885,7 @@ size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, cha
 		char *authresponsemsg = itjsmsg->authresponsemsg;
 
 		retVal = transactionConfirmationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -1009,7 +893,7 @@ size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, cha
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -1045,8 +929,8 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 	json_object_set_new(root, "b64pk", json_string(b64pubkey));
 	
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
-
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("simpleAuthRequest send data : %s\n", jsmsg);
 	boolean revChk;
 	char *outDataTmp = NULL;
 	size_t outDataLenTmp = 0;
@@ -1054,7 +938,7 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
 		
 		InternalJsonMessage *itjsmsg = parse(outDataTmp);
 		char *errorcodetmp = itjsmsg->errorcode;
@@ -1075,7 +959,7 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 			jsonRetFree(converitjsmsg);
 		}
 		else {
-			*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+			*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 			*outDataLen = outDataLenTmp;
 			memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -1105,14 +989,14 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("simpleAuthRequest received data : %s\n", *outData);
 	json_decref(root);
 	return retVal;
 }
@@ -1137,7 +1021,10 @@ size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, c
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
-		retDataFree(outDataTmp);
+		
+		if(outDataTmp)
+			retDataFree(outDataTmp);
+
 		internalJsonMessageRelease(itjsmsg);
 	}
 	else {
@@ -1175,7 +1062,8 @@ size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("simpleAuthResponse send data : %s\n", jsmsg);
 
 	boolean revChk;
 	char *outDataTmp = NULL;
@@ -1184,8 +1072,8 @@ size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -1193,14 +1081,14 @@ size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
-
+	logutill("simpleAuthResponse received data : %s\n", *outData);
 	json_decref(root);
 
 	return retVal;
@@ -1224,7 +1112,7 @@ size_t simpleAuthResponseWithJson(char *targetUrl, char *jsmsg, char **outData, 
 
 
 		retVal = simpleAuthResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -1232,7 +1120,7 @@ size_t simpleAuthResponseWithJson(char *targetUrl, char *jsmsg, char **outData, 
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_AUTH);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
@@ -1266,7 +1154,8 @@ size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
 
 	jsmsg = json_dumps(root, 0);
-	fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
+	logutill("deregistrationRequest send data : %s\n", jsmsg);
 
 	boolean revChk;
 	char *outDataTmp = NULL;
@@ -1275,8 +1164,8 @@ size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **
 	revChk = httpsPost(SSL_PEMCERT_PATH_UAFSDK, targetUrl, jsmsg, &outDataTmp, &outDataLenTmp);
 	retVal = revChk;
 
-	if (revChk && outDataTmp && outDataLenTmp > 0) {
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+	if (!revChk && outDataTmp && outDataLenTmp > 0) {
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 
@@ -1284,13 +1173,14 @@ size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_DEREG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 
 		if (temErrMsg)
 			free(temErrMsg);
 	}
+	logutill("deregistrationRequest received data : %s\n", *outData);
 
 	json_decref(root);
 	return retVal;
@@ -1313,7 +1203,7 @@ size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
 		retVal = deregistrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
-		*outData = (char*)calloc(outDataLenTmp, sizeof(char));
+		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
 		retDataFree(outDataTmp);
@@ -1321,7 +1211,7 @@ size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 	}
 	else {
 		char* temErrMsg = getCommonErrMsg(OPERATION_DEREG);
-		*outData = (char*)calloc(strlen(temErrMsg), sizeof(char));
+		*outData = (char*)calloc(strlen(temErrMsg) + 1, sizeof(char));
 		*outDataLen = strlen(temErrMsg);
 		memcpy(*outData, temErrMsg, strlen(temErrMsg));
 

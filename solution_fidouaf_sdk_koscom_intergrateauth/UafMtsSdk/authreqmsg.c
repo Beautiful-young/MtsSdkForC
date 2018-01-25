@@ -126,7 +126,7 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 
 	authReqSize = json_array_size(authRequestRead);
 
-	fprintf(stdout, "authReqSize : %d", authReqSize);
+	//fprintf(stdout, "authReqSize : %d", authReqSize);
 
 	if (authReqSize < 1) {
 		fprintf(stderr, "error : authRequestRead array size is invalid.");
@@ -227,7 +227,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 	if (b64authReq_b64Dec)
 		free(b64authReq_b64Dec);
 
-	fprintf(stdout, "out : %s\n", (char*)b64authReq_b64Dec_Tmp);
+	//fprintf(stdout, "out : %s\n", (char*)b64authReq_b64Dec_Tmp);
 	
 	//authentication request message parse
 
@@ -273,7 +273,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 
 	authReqSize = json_array_size(authRequestRead);
 
-	fprintf(stdout, "authReqSize : %d", authReqSize);
+	//fprintf(stdout, "authReqSize : %d", authReqSize);
 
 	if (authReqSize < 1) {
 		fprintf(stderr, "error : authRequestRead array size is invalid.");

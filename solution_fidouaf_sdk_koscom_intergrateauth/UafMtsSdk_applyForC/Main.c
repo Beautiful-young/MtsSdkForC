@@ -20,49 +20,382 @@ const char *DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
 
 const char *TESTSIMREQMSG = "{\"version\":\"1.0\",\"source\":8,\"target\":64,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"7f0d2ba098c445edbb457737b80a1d82\",\"errorcode\":\"00000000\",\"operation\":\"auth\",\"authrequestmsg\":\"W3siaGVhZGVyIjp7InVwdiI6eyJtYWpvciI6MSwibWlub3IiOjB9LCJvcCI6IkF1dGgiLCJhcHBJRCI6Imh0dHBzOi8vMjExLjIzNi4yNDYuNzc6OTAyNC9hcHBpZCIsInNlcnZlckRhdGEiOiJlMjNmNjUyMGJjZmU0MjVmOTZjM2YxYTdjMjJmNzg0OSIsImV4dHMiOlt7ImlkIjoic2ltcGxlcHVia2V5IiwiZGF0YSI6ImNIVmliR2xqSUd0bGVRIiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX0seyJpZCI6Im5vbmlkIiwiZGF0YSI6Ilhib00wQ1hOL1g4bGJuL0JSdURKd1dYcWg2aUp6MHdkR3VseDNQUm43Mnc9IiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX1dfSwiY2hhbGxlbmdlIjoiZTRiZGI3OGU1NDQwNDIzYmExODNlMTNhYWM3N2E0NTMiLCJwb2xpY3kiOnt9fV0\",\"authenticationmode\":\"3\"}";
 
-void registration();
+const char *TEST_REG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
+const char *TEST_REG_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"3b5a557920a24a438f6502bc19bd19f4\",\"operation\":\"reg\",\"regresponsemsg\":\"\"}";
+
+const char *TEST_AUTH_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\"}";
+const char *TEST_AUTH_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"c2413ff5596e4050bd93994b777bb8fc\",\"operation\":\"auth\",\"authresponsemsg\":\"\"}";
+
+const char *TEST_AUTHTC_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\",\"contentType\":\"text/plain\",\"content\":\"content samile.\",\"contentEncodingType\":\"plaintext\"}";
+const char *TEST_AUTHTC_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"\",\"operation\":\"auth\",\"authresponsemsg\":\"\"}";
+
+const char *TEST_SIMPLE_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\",\"authenticationmode\":\"3\",\"b64pk\":\"cHVibGljIGtleQ\"}";
+const char *TEST_SIMPLE_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"1a83de7a47b54b18a31e6397b0551a4a\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authenticationmode\":\"3\"}";
+
+void registration_test();
+void authentication_test();
 void getPubKeyTest();
+void transactionconfirmation_test();
+void simpleauthentication_test();
 
 /*
-Fido registratin test.
+1. Fido registration test.
 */
-void registration() {
-	size_t ret;
+void registration_test() {
+	size_t ret=1;
+	size_t revChk = 0;
+	char *outData = NULL;
+	size_t outDataLen = 0;
+	char targetUrl[128];
+	fprintf(stdout, "== 1. FIDO registration Test. ==\n");
+
+	//Environment file initialization settings.
+	
+	ret = Init(PATH);
+	if (ret) {
+		fprintf(stdout, "Check the UafMtsSdk environment file information. \n");
+		return;
+	}
+	
+	//1-1. registration request
+	fprintf(stdout, "  -- 1-1. registration request \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl,"%s%s", SERVERADDR, REGISTRATIONREQUESTSUBURL);
+	//js_regreqmsg 샘플 메시지
+	revChk = registrationRequestWithJson((char*)targetUrl, (char*)TEST_REG_REQ_JSMSG, &outData, &outDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the registrationRequestWithJson function.");
+		if (outData)
+			free(outData);
+		return;
+	}
+
+	if (!outData) {
+		fprintf(stdout, "outData is null.");
+		return;
+	}
+	char* tmpIeregregmsg = NULL;
+	tmpIeregregmsg = calloc(outDataLen+1, sizeof(char));
+	memcpy(tmpIeregregmsg, outData, outDataLen);
+	
+	if (outData)
+		free(outData);
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "reg req receive data : %s \n", tmpIeregregmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeregregmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeregregmsg)
+		free(tmpIeregregmsg);
+
+	fprintf(stdout, "  -- 1-2.  registration response \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, REGISTRATIONRESPONSESUBURL);
+
+	char *outRespData = NULL;
+	size_t outRespDataLen = 0;
+
+	revChk = registrationResponseWithJson((char*)targetUrl, (char*)TEST_REG_RESP_JSMSG, &outRespData, &outRespDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outRespDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the registrationResponseWithJson function.");
+		if (outRespData)
+			free(outRespData);
+		return;
+	}
+
+	if (!outRespData) {
+		fprintf(stdout, "outRespData is null.");
+		return;
+	}
+	char* tmpIeregrespmsg = NULL;
+	tmpIeregrespmsg = calloc(outRespDataLen + 1, sizeof(char));
+	memcpy(tmpIeregrespmsg, outRespData, outRespDataLen);
+
+	if (outRespData)
+		free(outRespData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "reg response receive data : %s \n", tmpIeregrespmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeregregmsg 값은 MTS앱에 전달한다.
+	
+	if (tmpIeregrespmsg)
+		free(tmpIeregrespmsg);
+}
+
+/*
+2. Fido authentication test.
+*/
+void authentication_test() {
+	size_t ret = 1;
 	size_t revChk = FALSE;
 	char *outData = NULL;
 	size_t outDataLen = 0;
 	char targetUrl[128];
+	fprintf(stdout, "== 2. FIDO authentication Test. ==\n");
+
+	//Environment file initialization settings.
 	ret = Init(PATH);
-	
-
-	//logutill("test");
-
-	//1. Environment file initialization settings.
-	fprintf(stdout, "FIDO registration Test. \n");
-
 	if (ret) {
-		fprintf(stdout,"Check the UafMtsSdk environment file information. \n");
+		fprintf(stdout, "Check the UafMtsSdk environment file information. \n");
 		return;
 	}
-	//2. registration request
-	//js_regreqmsg 샘플 메시지
-	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
 
+	//2-1. authentication request
+	fprintf(stdout, "  -- 2-1. authentication request \n");
 	memset(targetUrl, 0x00, sizeof(targetUrl));
-	sprintf(targetUrl,"%s%s", SERVERADDR, REGISTRATIONREQUESTSUBURL);
-	revChk = registrationRequestWithJson((char*)targetUrl, (char*)js_regreqmsg, &outData, &outDataLen);
+	sprintf(targetUrl, "%s%s", SERVERADDR, AUTHENTICATIONREQUESTSUBURL);
+	//TEST_AUTH_REQ_JSMSG 샘플 메시지
+	revChk = authenticationRequestWithJson((char*)targetUrl, (char*)TEST_AUTH_REQ_JSMSG, &outData, &outDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the authenticationRequestWithJson function.");
+		if (outData)
+			free(outData);
+		return;
+	}
+
+	if (!outData) {
+		fprintf(stdout, "outData is null.");
+		return;
+	}
+
+	char* tmpIeauthregmsg = NULL;
+	tmpIeauthregmsg = calloc(outDataLen + 1, sizeof(char));
+	memcpy(tmpIeauthregmsg, outData, outDataLen);
 
 	if (outData)
 		free(outData);
 
-	//3. registration response
-	const char *js_regrespmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "auth req receive data : %s \n", tmpIeauthregmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthregmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeauthregmsg)
+		free(tmpIeauthregmsg);
+
+	fprintf(stdout, "  -- 2-2.  authentication response \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, AUTHENTICATIONRESPONSESUBURL);
+
+	char *outRespData = NULL;
+	size_t outRespDataLen = 0;
+
+	revChk = registrationResponseWithJson((char*)targetUrl, (char*)TEST_AUTH_RESP_JSMSG, &outRespData, &outRespDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outRespDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the registrationResponseWithJson function.");
+		if (outRespData)
+			free(outRespData);
+		return;
+	}
+
+	if (!outRespData) {
+		fprintf(stdout, "outRespData is null.");
+		return;
+	}
+	char* tmpIeauthrespmsg = NULL;
+	tmpIeauthrespmsg = calloc(outRespDataLen + 1, sizeof(char));
+	memcpy(tmpIeauthrespmsg, outRespData, outRespDataLen);
+
+	if (outRespData)
+		free(outRespData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "auth response receive data : %s \n", tmpIeauthrespmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthrespmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeauthrespmsg)
+		free(tmpIeauthrespmsg);
+
+}
+
+/*
+3. Fido transaction confirmation test.
+*/
+void transactionconfirmation_test() {
+	size_t ret = 1;
+	size_t revChk = 0;
+	char *outData = NULL;
+	size_t outDataLen = 0;
+	char targetUrl[128];
+	fprintf(stdout, "== 3. FIDO transaction confirmation Test. ==\n");
+
+	//Environment file initialization settings.
+	ret = Init(PATH);
+	if (ret) {
+		fprintf(stdout, "Check the UafMtsSdk environment file information. \n");
+		return;
+	}
+
+	//3-1. transaction confirmation request
+	fprintf(stdout, "  -- 3-1. transaction confirmation request \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, TRANSACTIONREQUESTSUBURL);
+	//TEST_AUTHTC_REQ_JSMSG 샘플 메시지
+	revChk = transactionConfirmationRequestWithJson((char*)targetUrl, (char*)TEST_AUTHTC_REQ_JSMSG, &outData, &outDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the transactionConfirmationRequestWithJson function.");
+		if (outData)
+			free(outData);
+		return;
+	}
+
+	if (!outData) {
+		fprintf(stdout, "outData is null.");
+		return;
+	}
+
+	char* tmpIetcregmsg = NULL;
+	tmpIetcregmsg = calloc(outDataLen + 1, sizeof(char));
+	memcpy(tmpIetcregmsg, outData, outDataLen);
+
+	if (outData)
+		free(outData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "transaction confirmation req receive data : %s \n", tmpIetcregmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthregmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIetcregmsg)
+		free(tmpIetcregmsg);
+
+	fprintf(stdout, "  -- 3-2.  transaction confirmation response \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, TRANSACTIONRESPONSESUBURL);
+
+	char *outRespData = NULL;
+	size_t outRespDataLen = 0;
+
+	revChk = transactionConfirmationResponseWithJson((char*)targetUrl, (char*)TEST_AUTHTC_RESP_JSMSG, &outRespData, &outRespDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outRespDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the transactionconfirmationResponseWithJson function.");
+		if (outRespData)
+			free(outRespData);
+		return;
+	}
+
+	if (!outRespData) {
+		fprintf(stdout, "outRespData is null.");
+		return;
+	}
+	char* tmpIetcrespmsg = NULL;
+	tmpIetcrespmsg = calloc(outRespDataLen + 1, sizeof(char));
+	memcpy(tmpIetcrespmsg, outRespData, outRespDataLen);
+
+	if (outRespData)
+		free(outRespData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "transaction confirmation response receive data : %s \n", tmpIetcrespmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthrespmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIetcrespmsg)
+		free(tmpIetcrespmsg);
+
+}
+/*
+4. Fido simple authentication test.
+*/
+void simpleauthentication_test() {
+
+	size_t ret = 1;
+	size_t revChk = FALSE;
+	char *outData = NULL;
+	size_t outDataLen = 0;
+	char targetUrl[128];
+	fprintf(stdout, "== 4. FIDO simple authentication Test. ==\n");
+
+	//Environment file initialization settings.
+	ret = Init(PATH);
+	if (ret) {
+		fprintf(stdout, "Check the UafMtsSdk environment file information. \n");
+		return;
+	}
+
+	//4-1. simple authentication request
+	fprintf(stdout, "  -- 4-1. simple authentication request \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, SIMPLEAUTHREQUESTSUBURL);
+	const char* nonid64enc = "bm9uaWR0ZXN0";
+	//TEST_AUTH_REQ_JSMSG 샘플 메시지
+	revChk = simpleAuthRequestWithJson((char*)targetUrl, (char*)TEST_SIMPLE_REQ_JSMSG, (char*)nonid64enc, &outData, &outDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the simpleAuthRequestWithJson function.");
+		if (outData)
+			free(outData);
+		return;
+	}
+
+	if (!outData) {
+		fprintf(stdout, "outData is null.");
+		return;
+	}
+
+	char* tmpIeauthregmsg = NULL;
+	tmpIeauthregmsg = calloc(outDataLen + 1, sizeof(char));
+	memcpy(tmpIeauthregmsg, outData, outDataLen);
+
+	if (outData)
+		free(outData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "simple auth req receive data : %s \n", tmpIeauthregmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthregmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeauthregmsg)
+		free(tmpIeauthregmsg);
+
+	fprintf(stdout, "  -- 4-2.  simple authentication response \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, SIMPLEAUTHRESPONSESUBURL);
+
+	char *outRespData = NULL;
+	size_t outRespDataLen = 0;
+
+	revChk = simpleAuthResponseWithJson((char*)targetUrl, (char*)TEST_SIMPLE_RESP_JSMSG, &outRespData, &outRespDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outRespDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the simpleAuthResponseWithJson function.");
+		if (outRespData)
+			free(outRespData);
+		return;
+	}
+
+	if (!outRespData) {
+		fprintf(stdout, "outRespData is null.");
+		return;
+	}
+	char* tmpIeauthrespmsg = NULL;
+	tmpIeauthrespmsg = calloc(outRespDataLen + 1, sizeof(char));
+	memcpy(tmpIeauthrespmsg, outRespData, outRespDataLen);
+
+	if (outRespData)
+		free(outRespData);
+
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "simple auth response receive data : %s \n", tmpIeauthrespmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeauthrespmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeauthrespmsg)
+		free(tmpIeauthrespmsg);
 
 
 }
 
 
-//
+
 void getPubKeyTest() {
 	char targetUrl[128];
 	char *outData = NULL;
@@ -121,7 +454,7 @@ void getPubKeyTest() {
 	//ret = getPubKeyFromExtention(tmpResult, &outPubKey, &outPubKeyLen);
 	ret = getPubKeyFromExtention(TESTSIMREQMSG, &outPubKey, &outPubKeyLen);
 	if (!ret) {
-		fprintf(stdout, "outPubKeyLen : %d\n", outPubKeyLen);
+ 		fprintf(stdout, "outPubKeyLen : %d\n", outPubKeyLen);
 	}
 	else {
 		fprintf(stdout, "Failed to acquire public key.\n");
@@ -147,8 +480,11 @@ void getPubKeyTest() {
 
 
 int main(void) {
-	//registration();
-	getPubKeyTest();
+	//registration_test();
+	//authentication_test();
+	//transactionconfirmation_test();
+	simpleauthentication_test();
+	//getPubKeyTest();
 
 
 	/*
