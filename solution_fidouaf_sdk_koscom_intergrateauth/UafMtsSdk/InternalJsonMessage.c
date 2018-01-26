@@ -1176,7 +1176,7 @@ void internalJsonMessageRelease(InternalJsonMessage* msgstruct) {
 		free(msgstruct->makCredentialInfoMsg);
 	}
 
-	if (msgstruct->assertionMsg != NULL) {
+ 	if (msgstruct->assertionMsg != NULL) {
 		free(msgstruct->assertionMsg);
 	}
 

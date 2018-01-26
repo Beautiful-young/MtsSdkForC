@@ -32,11 +32,15 @@ const char *TEST_AUTHTC_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"targe
 const char *TEST_SIMPLE_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\",\"authenticationmode\":\"3\",\"b64pk\":\"cHVibGljIGtleQ\"}";
 const char *TEST_SIMPLE_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"1a83de7a47b54b18a31e6397b0551a4a\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authenticationmode\":\"3\"}";
 
+const char *TEST_DEREG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"dereg\"}";
+
+
 void registration_test();
 void authentication_test();
 void getPubKeyTest();
 void transactionconfirmation_test();
 void simpleauthentication_test();
+void deregistration_test();
 
 /*
 1. Fido registration test.
@@ -390,11 +394,59 @@ void simpleauthentication_test() {
 
 	if (tmpIeauthrespmsg)
 		free(tmpIeauthrespmsg);
-
-
 }
 
+/*
+ 5. deregistration test
+*/
+void deregistration_test() {
+	size_t ret = 1;
+	size_t revChk = 0;
+	char *outData = NULL;
+	size_t outDataLen = 0;
+	char targetUrl[128];
+	fprintf(stdout, "== 1. FIDO deregistration Test. ==\n");
 
+	//Environment file initialization settings.
+
+	ret = Init(PATH);
+	if (ret) {
+		fprintf(stdout, "Check the UafMtsSdk environment file information. \n");
+		return;
+	}
+
+	//1-1. registration request
+	fprintf(stdout, "  -- 1-1. deregistration request \n");
+	memset(targetUrl, 0x00, sizeof(targetUrl));
+	sprintf(targetUrl, "%s%s", SERVERADDR, DEREGISTRATIONREQUESTSUBURL);
+	//js_deregreqmsg 샘플 메시지
+	revChk = deregistrationRequestWithJson((char*)targetUrl, (char*)TEST_DEREG_REQ_JSMSG, &outData, &outDataLen);
+	// 리턴값에 0x00이 들어있을수 있어, outDataLen을 같이 리턴됨
+	if (revChk) {
+		fprintf(stdout, "A communication error with the server occurred when calling the deregistrationRequestWithJson function.");
+		if (outData)
+			free(outData);
+		return;
+	}
+
+	if (!outData) {
+		fprintf(stdout, "outData is null.");
+		return;
+	}
+	char* tmpIeregregmsg = NULL;
+	tmpIeregregmsg = calloc(outDataLen + 1, sizeof(char));
+	memcpy(tmpIeregregmsg, outData, outDataLen);
+
+	if (outData)
+		free(outData);
+	fprintf(stdout, "-==-\n");
+	fprintf(stdout, "reg req receive data : %s \n", tmpIeregregmsg);
+	fprintf(stdout, "-==-\n");
+	//tmpIeregregmsg 값은 MTS앱에 전달한다.
+
+	if (tmpIeregregmsg)
+		free(tmpIeregregmsg);
+}
 
 void getPubKeyTest() {
 	char targetUrl[128];
@@ -483,7 +535,8 @@ int main(void) {
 	//registration_test();
 	//authentication_test();
 	//transactionconfirmation_test();
-	simpleauthentication_test();
+	//simpleauthentication_test();
+	deregistration_test();
 	//getPubKeyTest();
 
 

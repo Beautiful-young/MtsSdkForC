@@ -106,8 +106,8 @@ void saimplehttps(char* url, char* data) {
 }
 
 
-int httpsPost(char *pemcert, char* url, char* data,char** outData, size_t *outDataLen) {
-	int retData = 1;
+size_t httpsPost(char *pemcert, char* url, char* data,char** outData, size_t *outDataLen) {
+	size_t retData = 1;
 	CURL *curl;
 	CURLcode res;
 	struct curl_slist *headers = NULL;
