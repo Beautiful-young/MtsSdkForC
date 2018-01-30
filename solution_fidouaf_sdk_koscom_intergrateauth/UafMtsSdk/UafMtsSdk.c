@@ -369,7 +369,7 @@ char* getCommonErrMsg(const char* operation) {
 1. registrationRequest
 등록요청
 */
-size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+size_t registrationRequest(char *targetUrl, char *userid, char *appid, size_t mobiletype, char* mobileversion, char* mobilemodel, char* appversion, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 	char rpwebsession[38];
 	size_t rc;
@@ -381,10 +381,14 @@ size_t registrationRequest(char *targetUrl, char *userid, char *appid, char **ou
 	json_object_set_new(root, "source", json_integer(DIRECTION_FIDOSDK));
 	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
 	json_object_set_new(root, "operation", json_string(OPERATION_REG));
-
 	json_object_set_new(root, "userid", json_string(userid));
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+	json_object_set_new(root, "mobiletype", json_integer(mobiletype));
+	json_object_set_new(root, "mobileversion", json_string(mobileversion));
+	json_object_set_new(root, "mobilemodel", json_string(mobilemodel));
+	json_object_set_new(root, "appversion", json_string(appversion));
+
 
 	jsmsg = json_dumps(root, 0);
 	
@@ -430,9 +434,10 @@ size_t registrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData,
 	if (itjsmsg) {
 		char *outDataTmp = NULL;
 		size_t outDataLenTmp = 0;
+		
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
-		retVal = registrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		retVal = registrationRequest(targetUrl, userid, appid, itjsmsg->mobiletype, itjsmsg->mobileversion, itjsmsg->mobilemodel, itjsmsg->appversion, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -458,7 +463,7 @@ size_t registrationRequestWithJson(char *targetUrl, char *jsmsg, char **outData,
 2. registrationResponse
  등록 검증
 */
-size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char *b64regresp, char **outData, size_t *outDataLen) {
+size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char *b64regresp, char *authtype,char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 
 	char *jsmsg = NULL;
@@ -472,6 +477,7 @@ size_t registrationResponse(char *targetUrl, char *appid, char *sessionid, char 
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "sessionid", json_string(sessionid));
 	json_object_set_new(root, "regresponsemsg", json_string(b64regresp));
+	json_object_set_new(root, "authtype", json_string(authtype));
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -520,7 +526,7 @@ size_t registrationResponseWithJson(char *targetUrl, char *jsmsg, char **outData
 		char *regresponsemsg = itjsmsg->regrequestmsg;
 
 
-		retVal = registrationResponse(targetUrl, appid, sessionid, regresponsemsg, &outDataTmp, &outDataLenTmp);
+		retVal = registrationResponse(targetUrl, appid, sessionid, regresponsemsg, itjsmsg->authtype,&outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -545,7 +551,7 @@ size_t registrationResponseWithJson(char *targetUrl, char *jsmsg, char **outData
 3. authenticationRequest
 인증요청
 */
-size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+size_t authenticationRequest(char *targetUrl, char *userid, char *appid, size_t mobiletype, char* mobileversion, char* mobilemodel, char* appversion, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 	char rpwebsession[38];
 	size_t rc;
@@ -562,6 +568,11 @@ size_t authenticationRequest(char *targetUrl, char *userid, char *appid, char **
 	json_object_set_new(root, "userid", json_string(userid));
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+	json_object_set_new(root, "mobiletype", json_integer(mobiletype));
+	json_object_set_new(root, "mobileversion", json_string(mobileversion));
+	json_object_set_new(root, "mobilemodel", json_string(mobilemodel));
+	json_object_set_new(root, "appversion", json_string(appversion));
+
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -610,7 +621,7 @@ size_t authenticationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 		size_t outDataLenTmp = 0;
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
-		retVal = authenticationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		retVal = authenticationRequest(targetUrl, userid, appid, itjsmsg->mobiletype, itjsmsg->mobileversion, itjsmsg->mobilemodel, itjsmsg->appversion, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -634,7 +645,7 @@ size_t authenticationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 4. authenticationResponse
 인증검증
 */
-size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char *authtype, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 
 	char *jsmsg = NULL;
@@ -649,6 +660,7 @@ size_t authenticationResponse(char *targetUrl, char *appid, char *sessionid, cha
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "sessionid", json_string(sessionid));
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+	json_object_set_new(root, "authtype", json_string(authtype));
 
 	jsmsg = json_dumps(root, 0);
 	logutill("authenticationResponse send data : %s\n", jsmsg);
@@ -697,7 +709,7 @@ size_t authenticationResponseWithJson(char *targetUrl, char *jsmsg, char **outDa
 		char *authresponsemsg = itjsmsg->authresponsemsg;
 
 
-		retVal = authenticationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		retVal = authenticationResponse(targetUrl, appid, sessionid, authresponsemsg, itjsmsg->authtype, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -723,7 +735,7 @@ size_t authenticationResponseWithJson(char *targetUrl, char *jsmsg, char **outDa
 transaction confirmation 요청
 */
 size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
-	, char *contentType, char *contentEncodingType, char *content, char **outData, size_t *outDataLen) {
+	, char *contentType, char *contentEncodingType, char *content, size_t mobiletype, char* mobileversion, char* mobilemodel, char* appversion, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 	char rpwebsession[38];
 	size_t rc;
@@ -736,14 +748,16 @@ size_t transactionConfirmationRequest(char *targetUrl, char *userid, char *appid
 	json_object_set_new(root, "target", json_integer(DIRECTION_FIDOSERVERAGENT));
 	json_object_set_new(root, "operation", json_string(OPERATION_AUTH));
 	json_object_set_new(root, "authenticationmode", json_string(AUTHENTICATIONMODE_TC));
-
 	json_object_set_new(root, "userid", json_string(userid));
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "contentType", json_string(contentType));
 	json_object_set_new(root, "contentEncodingType", json_string(contentEncodingType));
 	json_object_set_new(root, "content", json_string(content));
-
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+	json_object_set_new(root, "mobiletype", json_integer(mobiletype));
+	json_object_set_new(root, "mobileversion", json_string(mobileversion));
+	json_object_set_new(root, "mobilemodel", json_string(mobilemodel));
+	json_object_set_new(root, "appversion", json_string(appversion));
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -795,7 +809,7 @@ size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char
 		char *contentEncodingType = itjsmsg->contentEncodingType;
 		char *content = itjsmsg->content;
 
-		retVal = transactionConfirmationRequest(targetUrl, userid, appid, contentType, contentEncodingType, content, &outDataTmp, &outDataLenTmp);
+		retVal = transactionConfirmationRequest(targetUrl, userid, appid, contentType, contentEncodingType, content, itjsmsg->mobiletype, itjsmsg->mobileversion, itjsmsg->mobilemodel, itjsmsg->appversion, &outDataTmp, &outDataLenTmp);
 
 		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
@@ -820,7 +834,7 @@ size_t transactionConfirmationRequestWithJson(char *targetUrl, char *jsmsg, char
 6. transactionConfirmationResponse
 transaction confirmation 요청
 */
-size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char *authtype,char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 
 	char *jsmsg = NULL;
@@ -835,6 +849,7 @@ size_t transactionConfirmationResponse(char *targetUrl, char *appid, char *sessi
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "sessionid", json_string(sessionid));
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+	json_object_set_new(root, "authtype", json_string(authtype));
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -884,7 +899,7 @@ size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, cha
 		char *sessionid = itjsmsg->sessionid;
 		char *authresponsemsg = itjsmsg->authresponsemsg;
 
-		retVal = transactionConfirmationResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		retVal = transactionConfirmationResponse(targetUrl, appid, sessionid, authresponsemsg, itjsmsg->authtype, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -909,7 +924,7 @@ size_t transactionConfirmationResponseWithJson(char *targetUrl, char *jsmsg, cha
 7. simpleAuthRequest
 단축서명요청
 */
-size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pubkey, char *b64nonid, char **outData, size_t *outDataLen) {
+size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pubkey, char *b64nonid, size_t mobiletype, char* mobileversion, char* mobilemodel, char* appversion, char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 	char rpwebsession[38];
 	size_t rc;
@@ -927,7 +942,11 @@ size_t simpleAuthRequest(char *targetUrl, char *userid, char *appid, char *b64pu
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
 	json_object_set_new(root, "b64pk", json_string(b64pubkey));
-	
+	json_object_set_new(root, "mobiletype", json_integer(mobiletype));
+	json_object_set_new(root, "mobileversion", json_string(mobileversion));
+	json_object_set_new(root, "mobilemodel", json_string(mobilemodel));
+	json_object_set_new(root, "appversion", json_string(appversion));
+
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
 	logutill("simpleAuthRequest send data : %s\n", jsmsg);
@@ -1025,7 +1044,7 @@ size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, c
 		char *appid = itjsmsg->appid;
 		char *b64pubkey = itjsmsg->b64pk;
 
-		retVal = simpleAuthRequest(targetUrl, userid, appid, b64pubkey, b64nonid,  &outDataTmp, &outDataLenTmp);
+		retVal = simpleAuthRequest(targetUrl, userid, appid, b64pubkey, b64nonid, itjsmsg->mobiletype, itjsmsg->mobileversion, itjsmsg->mobilemodel, itjsmsg->appversion, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp+1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -1053,7 +1072,7 @@ size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, c
 8. simpleAuthResponse
 단축서명 검증요청
 */
-size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen) {
+size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char *authtype,char **outData, size_t *outDataLen) {
 	size_t retVal = 0;
 
 	char *jsmsg = NULL;
@@ -1068,6 +1087,7 @@ size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "sessionid", json_string(sessionid));
 	json_object_set_new(root, "authresponsemsg", json_string(b64authresp));
+	json_object_set_new(root, "authtype", json_string(authtype));
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -1119,7 +1139,7 @@ size_t simpleAuthResponseWithJson(char *targetUrl, char *jsmsg, char **outData, 
 		char *authresponsemsg = itjsmsg->authresponsemsg;
 
 
-		retVal = simpleAuthResponse(targetUrl, appid, sessionid, authresponsemsg, &outDataTmp, &outDataLenTmp);
+		retVal = simpleAuthResponse(targetUrl, appid, sessionid, authresponsemsg, itjsmsg->authtype, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);
@@ -1143,7 +1163,7 @@ size_t simpleAuthResponseWithJson(char *targetUrl, char *jsmsg, char **outData, 
 9. deregistrationRequest
 탈퇴요청
 */
-size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen) {
+size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, size_t mobiletype, char* mobileversion, char* mobilemodel, char* appversion, char **outData, size_t *outDataLen) {
 
 	size_t retVal = 0;
 	char rpwebsession[38];
@@ -1160,6 +1180,10 @@ size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **
 	json_object_set_new(root, "userid", json_string(userid));
 	json_object_set_new(root, "appid", json_string(appid));
 	json_object_set_new(root, "rpwebsession", json_string(rpwebsession));
+	json_object_set_new(root, "mobiletype", json_integer(mobiletype));
+	json_object_set_new(root, "mobileversion", json_string(mobileversion));
+	json_object_set_new(root, "mobilemodel", json_string(mobilemodel));
+	json_object_set_new(root, "appversion", json_string(appversion));
 
 	jsmsg = json_dumps(root, 0);
 	//fprintf(stdout, "jsmsg : %s\n", jsmsg);
@@ -1210,7 +1234,7 @@ size_t deregistrationRequestWithJson(char *targetUrl, char *jsmsg, char **outDat
 		size_t outDataLenTmp = 0;
 		char *userid = itjsmsg->userid;
 		char *appid = itjsmsg->appid;
-		retVal = deregistrationRequest(targetUrl, userid, appid, &outDataTmp, &outDataLenTmp);
+		retVal = deregistrationRequest(targetUrl, userid, appid, itjsmsg->mobiletype, itjsmsg->mobileversion, itjsmsg->mobilemodel, itjsmsg->appversion, &outDataTmp, &outDataLenTmp);
 		*outData = (char*)calloc(outDataLenTmp + 1, sizeof(char));
 		*outDataLen = outDataLenTmp;
 		memcpy(*outData, outDataTmp, outDataLenTmp);

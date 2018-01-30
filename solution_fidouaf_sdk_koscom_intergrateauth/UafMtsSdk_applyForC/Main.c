@@ -20,19 +20,19 @@ const char *DEREGISTRATIONREQUESTSUBURL = "/deregistrationrequestfromfc";
 
 const char *TESTSIMREQMSG = "{\"version\":\"1.0\",\"source\":8,\"target\":64,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"7f0d2ba098c445edbb457737b80a1d82\",\"errorcode\":\"00000000\",\"operation\":\"auth\",\"authrequestmsg\":\"W3siaGVhZGVyIjp7InVwdiI6eyJtYWpvciI6MSwibWlub3IiOjB9LCJvcCI6IkF1dGgiLCJhcHBJRCI6Imh0dHBzOi8vMjExLjIzNi4yNDYuNzc6OTAyNC9hcHBpZCIsInNlcnZlckRhdGEiOiJlMjNmNjUyMGJjZmU0MjVmOTZjM2YxYTdjMjJmNzg0OSIsImV4dHMiOlt7ImlkIjoic2ltcGxlcHVia2V5IiwiZGF0YSI6ImNIVmliR2xqSUd0bGVRIiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX0seyJpZCI6Im5vbmlkIiwiZGF0YSI6Ilhib00wQ1hOL1g4bGJuL0JSdURKd1dYcWg2aUp6MHdkR3VseDNQUm43Mnc9IiwiZmFpbF9pZl91bmtub3duIjpmYWxzZX1dfSwiY2hhbGxlbmdlIjoiZTRiZGI3OGU1NDQwNDIzYmExODNlMTNhYWM3N2E0NTMiLCJwb2xpY3kiOnt9fV0\",\"authenticationmode\":\"3\"}";
 
-const char *TEST_REG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"reg\"}";
-const char *TEST_REG_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"3b5a557920a24a438f6502bc19bd19f4\",\"operation\":\"reg\",\"regresponsemsg\":\"\"}";
+const char *TEST_REG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"mobiletype\":1,\"operation\":\"reg\",\"mobileversion\":\"android 7.0\",\"mobilemodel\":\"SM-G950N\",\"appversion\":\"koscom fido 1.0\"}";
+const char *TEST_REG_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"22ad89127b7745ab9a6ba681c05bac79\",\"operation\":\"reg\",\"regresponsemsg\":\"\",\"authtype\":\"2\"}";
 
-const char *TEST_AUTH_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\"}";
-const char *TEST_AUTH_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"c2413ff5596e4050bd93994b777bb8fc\",\"operation\":\"auth\",\"authresponsemsg\":\"\"}";
+const char *TEST_AUTH_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"mobiletype\":1,\"operation\":\"auth\",\"mobileversion\":\"android 7.0\",\"mobilemodel\":\"SM-G950N\",\"appversion\":\"koscom fido 1.0\"}";
+const char *TEST_AUTH_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"266f5688081e418489bbf70ae1a6ed2c\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authtype\":\"2\"}";
 
-const char *TEST_AUTHTC_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\",\"contentType\":\"text/plain\",\"content\":\"content samile.\",\"contentEncodingType\":\"plaintext\"}";
-const char *TEST_AUTHTC_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"\",\"operation\":\"auth\",\"authresponsemsg\":\"\"}";
+const char *TEST_AUTHTC_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"mobiletype\":1,\"operation\":\"auth\",\"contentType\":\"text/plain\",\"content\":\"content samile.\",\"contentEncodingType\":\"plaintext\",\"mobileversion\":\"android 7.0\",\"mobilemodel\":\"SM-G950N\",\"appversion\":\"koscom fido 1.0\"}";
+const char *TEST_AUTHTC_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authtype\":\"2\"}";
 
-const char *TEST_SIMPLE_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\",\"authenticationmode\":\"3\",\"b64pk\":\"cHVibGljIGtleQ\"}";
-const char *TEST_SIMPLE_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"1a83de7a47b54b18a31e6397b0551a4a\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authenticationmode\":\"3\"}";
+const char *TEST_SIMPLE_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"mobiletype\":1,\"operation\":\"auth\",\"authenticationmode\":\"3\",\"b64pk\":\"cHVibGljIGtleQ\",\"mobileversion\":\"android 7.0\",\"mobilemodel\":\"SM-G950N\",\"appversion\":\"koscom fido 1.0\"}";
+const char *TEST_SIMPLE_RESP_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"sessionid\":\"863f0bf9592e4d64ac7760f487441d8c\",\"operation\":\"auth\",\"authresponsemsg\":\"\",\"authenticationmode\":\"3\",\"authtype\":\"2\"}";
 
-const char *TEST_DEREG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"dereg\"}";
+const char *TEST_DEREG_REQ_JSMSG = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"mobiletype\":1,\"operation\":\"dereg\",\"mobileversion\":\"android 7.0\",\"mobilemodel\":\"SM-G950N\",\"appversion\":\"koscom fido 1.0\"}";
 
 
 void registration_test();
