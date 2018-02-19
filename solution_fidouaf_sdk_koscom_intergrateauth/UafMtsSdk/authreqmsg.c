@@ -79,10 +79,10 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 	json_t *authRequestRead = NULL;
 	json_t *authRequest_dec = NULL;
 
-	json_t *header_dec = NULL;//object
-	json_t *challenge_dec = NULL;//string
-	json_t *transaction_dec = NULL;//array
-	json_t *policy_dec = NULL;//object
+	json_t *header_dec = NULL;/*object*/
+	json_t *challenge_dec = NULL;/*string*/
+	json_t *transaction_dec = NULL;/*array*/
+	json_t *policy_dec = NULL;/*object*/
 
 	json_t *upv_dec = NULL;
 	json_t *op_dec = NULL;
@@ -93,9 +93,9 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 	json_t *authRequestWriter = NULL;
 	json_t *authRequest_enc = NULL;
 
-	json_t *header_enc = NULL;//object
+	json_t *header_enc = NULL;/*object*/
 
-							  //extention 설정
+							  /*extention 설정*/
 	json_t *exts_list_enc = NULL;
 	json_t *exts_enc_simplekey = NULL;
 	json_t *exts_enc_devid = NULL;
@@ -103,7 +103,7 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 
 	json_error_t error;
 	int authReqSize;
-	// json 
+	/* json */
 	authRequestRead = json_loads((const char*)b64authReq_b64Dec, 0, &error);
 
 	if (!authRequestRead) {
@@ -126,7 +126,7 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 
 	authReqSize = json_array_size(authRequestRead);
 
-	//fprintf(stdout, "authReqSize : %d", authReqSize);
+	/*fprintf(stdout, "authReqSize : %d", authReqSize);*/
 
 	if (authReqSize < 1) {
 		fprintf(stderr, "error : authRequestRead array size is invalid.");
@@ -227,17 +227,17 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 	if (b64authReq_b64Dec)
 		free(b64authReq_b64Dec);
 
-	//fprintf(stdout, "out : %s\n", (char*)b64authReq_b64Dec_Tmp);
+	/*fprintf(stdout, "out : %s\n", (char*)b64authReq_b64Dec_Tmp);*/
 	
-	//authentication request message parse
+	/*authentication request message parse*/
 
 	json_t *authRequestRead = NULL;
 	json_t *authRequest_dec = NULL;
 
-	json_t *header_dec = NULL;//object
-	json_t *challenge_dec = NULL;//string
-	json_t *transaction_dec = NULL;//array
-	json_t *policy_dec = NULL;//object
+	json_t *header_dec = NULL;/*object*/
+	json_t *challenge_dec = NULL;/*string*/
+	json_t *transaction_dec = NULL;/*array*/
+	json_t *policy_dec = NULL;/*object*/
 
 	json_t *upv_dec = NULL;
 	json_t *op_dec = NULL;
@@ -248,9 +248,9 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 	json_t *authRequestWriter = NULL;
 	json_t *authRequest_enc = NULL;
 
-	json_t *header_enc = NULL;//object
+	json_t *header_enc = NULL;/*object*/
 
-	//extention 설정
+	/*extention 설정*/
 	json_t *exts_list_enc = NULL;
 	json_t *exts_enc_simplekey = NULL;
 	json_t *exts_enc_devid = NULL;
@@ -258,7 +258,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 
 	json_error_t error;
 	int authReqSize;
-	// json 
+	/* json */
 	authRequestRead = json_loads((const char*)b64authReq_b64Dec_Tmp, 0, &error);
 
 	if (!authRequestRead) {
@@ -273,7 +273,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 
 	authReqSize = json_array_size(authRequestRead);
 
-	//fprintf(stdout, "authReqSize : %d", authReqSize);
+	/*fprintf(stdout, "authReqSize : %d", authReqSize);*/
 
 	if (authReqSize < 1) {
 		fprintf(stderr, "error : authRequestRead array size is invalid.");
@@ -329,8 +329,8 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 	}
 
 	challenge_dec = json_object_get(authRequest_dec, "challenge");
-	transaction_dec = json_object_get(authRequest_dec, "transaction");//array
-	policy_dec = json_object_get(authRequest_dec, "policy");//policy
+	transaction_dec = json_object_get(authRequest_dec, "transaction");/*array*/
+	policy_dec = json_object_get(authRequest_dec, "policy");/*policy*/
 
 	upv_dec = json_object_get(header_dec, "upv");
 	op_dec = json_object_get(header_dec, "op");
@@ -338,11 +338,11 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 	serverData_dec = json_object_get(header_dec, "serverData");
 	exts_dec = json_object_get(header_dec, "exts");
 
-	//authentication request 메시지 재설정
+	/*authentication request 메시지 재설정*/
 	authRequestWriter = json_array();
 	authRequest_enc = json_object();
 
-	header_enc = json_object();;//object
+	header_enc = json_object();;/*object*/
 	
 	if(json_is_object(upv_dec)){
 		json_object_set(header_enc, "upv", upv_dec);

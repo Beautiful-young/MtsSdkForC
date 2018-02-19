@@ -6,29 +6,29 @@
 #include <sys/types.h>
 #include <stddef.h>
 typedef struct InternalJsonMessage {
-	char* version;			//	string	
-	size_t source;			//	integer	
-	size_t target;			//	integer	
-	char* activecode;		//	string	
-	char* appid;			//	string	
-	char* userid;			//	string	
-	char* sessionid;		//	string	
-	size_t mobiletype;		//	integer	
-	char* mobileno;			//	stirng
-	char* pushid;			//	string	
-	char* errorcode;		//	string	
-	char* errormessage;		//	string	
-	char* rpwebsession;		//	string	
-	char* agenturl;			//	string	
-	char* operation;		//	string	
-	char* regrequestmsg;	//	string	
-	char* regresponsemsg;	//	string	
-	char* authrequestmsg;	//	string	
-	char* authresponsemsg;	//	string	
-	char* deregrequestmsg;	//	string
-	char* devmode;			//	string
+	char* version;			/*	string	*/
+	size_t source;			/*	integer	*/
+	size_t target;			/*	integer	*/
+	char* activecode;		/*	string	*/
+	char* appid;			/*	string	*/
+	char* userid;			/*	string	*/
+	char* sessionid;		/*	string	*/
+	size_t mobiletype;		/*	integer	*/
+	char* mobileno;			/*	stirng*/
+	char* pushid;			/*	string	*/
+	char* errorcode;		/*	string	*/
+	char* errormessage;		/*	string	*/
+	char* rpwebsession;		/*	string	*/
+	char* agenturl;			/*	string	*/
+	char* operation;		/*	string	*/
+	char* regrequestmsg;	/*	string	*/
+	char* regresponsemsg;	/*	string	*/
+	char* authrequestmsg;	/*	string	*/
+	char* authresponsemsg;	/*	string	*/
+	char* deregrequestmsg;	/*	string*/
+	char* devmode;			/*	string*/
 
-	char* authenticationmode; //string
+	char* authenticationmode; /*string*/
 
 	char* serverEndPoint;
 	char* tlsServerCertificate;
@@ -83,4 +83,4 @@ void internalJsonMessageRelease(InternalJsonMessage* msgstruct);
 void jsonRetFree(void *data);
 char* makeIJMessageToJson(InternalJsonMessage *ijmsg);
 
-#endif // !__InternalJsonMessage_H
+#endif /* !__InternalJsonMessage_H*/

@@ -42,4 +42,4 @@ static unsigned char tbl_h2b_post[255 - 'f'] = { 0, };
 #endif 
 
 
-#endif // !__logutill_H
+#endif /* !__logutill_H*/

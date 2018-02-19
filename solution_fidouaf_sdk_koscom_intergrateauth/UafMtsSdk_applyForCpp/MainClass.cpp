@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 
-	//registrationResponse 테스트
+	/*registrationResponse 테스트*/
 	/*
 	char *sessionid = NULL;
 	char *b64regresp = NULL;
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//registrationResponseWithJson 테스트
+	/*registrationResponseWithJson 테스트*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/registrationresponsefromfc";
 	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"operation\":\"reg\",\"regresponsemsg\":\"\"}";
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 	public static String APPID = "https://211.236.246.77:9024/appid";
 	*/
 
-	//authenticationRequest
+	/*authenticationRequest*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
 	revChk = authenticationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData, &outDataLen);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 
-	//authenticationResponseWithJson 
+	/*authenticationResponseWithJson */
 	/*
 	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":64,\"target\":8,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"operation\":\"auth\"}";
 	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//authenticationResponse
+	/*authenticationResponse*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
 	char *sessionid = NULL;
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//authenticationResponseWithJson
+	/*authenticationResponseWithJson*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"1\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"53e80666f19249fea257904a779b47de\"}";
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//transactionConfirmationRequest
+	/*transactionConfirmationRequest*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
 	char *contentType = NULL;
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//transactionConfirmationRequestWithJson
+	/*transactionConfirmationRequestWithJson*/
 	/*
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"2\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"185d418312d1416abf3b1fbac717ef99\"}";
 	targetUrl = "https://fido.signkorea.com:9033/authenticationrequestfromfc";
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//transactionConfirmationResponse
+	/*transactionConfirmationResponse*/
 	/*
 	char *sessionid = NULL;
 	char *b64regresp = NULL;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
 	*/
 
 
-	//transactionConfirmationResponseWithJson
+	/*transactionConfirmationResponseWithJson*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/authenticationresponsefromfc";
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"2\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"51d70066cdbd4c0a93bc5bc1adb30d7b\"}";
@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//simpleAuthRequest
+	/*simpleAuthRequest*/
 	/*
 	char *b64pubkey = NULL;
 	char *b64nonid = NULL;
@@ -278,8 +278,8 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//simpleAuthRequestWithJson
-	//size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, char **outData, size_t *outDataLen);
+	/*simpleAuthRequestWithJson*/
+	/*size_t simpleAuthRequestWithJson(char *targetUrl, char *jsmsg, char *b64nonid, char **outData, size_t *outDataLen);*/
 	/*
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"3\", \"userid\": \"test01\", \"appid\": \"https://211.236.246.77:9024/appid\", \"rpwebsession\": \"0b4e7edd5634486cbb5bd8dd9e4ab43c\"}";
 	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationrequestfromfc";
@@ -304,8 +304,8 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//simpleAuthResponse
-	//size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen);
+	/*simpleAuthResponse*/
+	/*size_t simpleAuthResponse(char *targetUrl, char *appid, char *sessionid, char *b64authresp, char **outData, size_t *outDataLen);*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationresponsefromfc";
 	char *sessionid = NULL;
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//simpleAuthResponseWithJson
+	/*simpleAuthResponseWithJson*/
 	/*
 	const char *js_regreqmsg = "{\"version\": \"1.0\", \"source\": 4, \"target\": 8, \"operation\": \"auth\", \"authenticationmode\": \"3\", \"appid\": \"https://211.236.246.77:9024/appid\", \"sessionid\": \"3acbf31d8548468eaffa2f06432ca79f\"}";
 	targetUrl = "https://fido.signkorea.com:9033/simpleauthenticationresponsefromfc";
@@ -356,8 +356,8 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//deregistrationRequest	
-	//size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);
+	/*deregistrationRequest	*/
+	/*size_t deregistrationRequest(char *targetUrl, char *userid, char *appid, char **outData, size_t *outDataLen);*/
 	/*
 	targetUrl = "https://fido.signkorea.com:9033/deregistrationrequestfromfc";
 	revChk = deregistrationRequest((char*)targetUrl, (char*)userid, (char*)appid, &outData, &outDataLen);
@@ -379,7 +379,7 @@ int main(int argc, char *argv[]) {
 	retDataFree(outData);
 	*/
 
-	//deregistrationRequestWithJson
+	/*deregistrationRequestWithJson*/
 
 	const char *js_regreqmsg = "{\"version\":\"1.0\",\"source\":8,\"target\":16,\"appid\":\"https://211.236.246.77:9024/appid\",\"userid\":\"test01\",\"sessionid\":\"ea1415d6ee2348ecb3f8741f127b8269\"}";
 	targetUrl = "https://fido.signkorea.com:9033/deregistrationrequestfromfc";

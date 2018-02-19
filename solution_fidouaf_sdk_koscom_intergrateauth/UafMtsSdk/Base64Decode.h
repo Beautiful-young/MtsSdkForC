@@ -3,4 +3,4 @@
 
 int Base64Url_Decode(const unsigned char *szDecoding, size_t nSize, unsigned char *szOutput, size_t *pnOutSize);
 
-#endif // !__Base64Decode_H
+#endif /* !__Base64Decode_H*/

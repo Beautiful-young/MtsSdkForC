@@ -43,4 +43,4 @@ const char*AUTHENTICATIONMODE_AUTH = "1";
 const char*AUTHENTICATIONMODE_TC = "2";
 const char*AUTHENTICATIONMODE_SS = "3";
 
-#endif // !__commonDef_H
+#endif /* !__commonDef_H*/

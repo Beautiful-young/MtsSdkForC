@@ -124,6 +124,7 @@
     <ClCompile Include="InternalJsonMessage.c" />
     <ClCompile Include="logutill.c" />
     <ClCompile Include="UafMtsSdk.c" />
+    <ClCompile Include="UafMtsSdkPro.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="authreqmsg.h" />
@@ -134,8 +135,13 @@
     <ClInclude Include="httputill.h" />
     <ClInclude Include="InternalJsonMessage.h" />
     <ClInclude Include="logutill.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="UafMessageDefine.h" />
     <ClInclude Include="UafMtsSdk.h" />
+    <ClInclude Include="UafMtsSdkPro.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="UafMtsSdk.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

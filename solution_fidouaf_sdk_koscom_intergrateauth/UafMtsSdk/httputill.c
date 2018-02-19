@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <curl/curl.h>
-
+#include <string.h>
+#include <stdlib.h>
 static const char *PCACERTFILE = "E:\\env_common\\UAF\\koscom_it\\client\\env\\clientcert\\cacert.pem";
 
 struct WriteThis {
@@ -131,7 +132,8 @@ size_t httpsPost(char *pemcert, char* url, char* data,char** outData, size_t *ou
 	curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
 	curl_easy_setopt(curl, CURLOPT_CAINFO, pemcert);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);
+	/*curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);*/
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(data));
 	/* send all data to this function  */
@@ -145,8 +147,8 @@ size_t httpsPost(char *pemcert, char* url, char* data,char** outData, size_t *ou
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 			curl_easy_strerror(res));
 	else {
-		//printf("%lu bytes retrieved\n", (long)chunk.size);
-		//printf("%s \n", chunk.memory);
+		/*printf("%lu bytes retrieved\n", (long)chunk.size);*/
+		/*printf("%s \n", chunk.memory);*/
 		if (chunk.size > 0) {
 			*outData = (char*)calloc(chunk.size + 1, sizeof(char));
 			*outDataLen = chunk.size;

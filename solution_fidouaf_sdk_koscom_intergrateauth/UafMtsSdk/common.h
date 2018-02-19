@@ -37,7 +37,7 @@ size_t Base64_GetEncodeLength(size_t nInputLen);
 static const unsigned char *m_sBase64Alphabet = (unsigned char*)"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const unsigned char *m_sBase64UrlAlphabet = (unsigned char*)"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-//uuid
+/*uuid*/
 size_t uuid_v4_gen(char *buffer);
 size_t getSessionID(char *buffer);
 /*
