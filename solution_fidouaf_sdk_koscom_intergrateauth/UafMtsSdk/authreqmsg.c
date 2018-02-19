@@ -140,7 +140,7 @@ size_t getPubKeyFromAuthReqB64Url(char* p_b64authReq, unsigned char **outPubKey,
 		return 1;
 	}
 
-	authRequest_dec = json_array_get(authRequestRead, 0);
+	authRequest_dec = json_array_get(authRequestRead, (size_t)0);
 
 	if (!json_is_object(authRequest_dec)) {
 		fprintf(stderr, "error : authRequest_dec is not object.");
@@ -280,7 +280,7 @@ char* setExtensionAuthReqB64Url(char* p_b64authReq, char* p_simplekey, char* p_d
 		goto FINISH;
 	}
 
-	authRequest_dec = json_array_get(authRequestRead, 0);
+	authRequest_dec = json_array_get(authRequestRead, (size_t)0);
 
 	if (!json_is_object(authRequest_dec)) {
 		fprintf(stderr, "error : authRequest_dec is not object.");
